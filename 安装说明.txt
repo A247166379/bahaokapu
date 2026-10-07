@@ -1,0 +1,37 @@
+﻿八号卡铺 — 宝塔安装说明
+
+一、安装运行环境
+1. 安装宝塔 Linux 面板后，打开“软件商店”，选择 LNMP 环境。
+2. 安装 Nginx、MySQL 8.0、PHP 8.2；本程序不需要 Apache、Redis 或 Docker。
+3. 在 PHP 8.2 的“安装扩展”中启用：GD、bcmath、mbstring、fileinfo、curl、pdo_mysql、zip、dom。
+   GD 必须支持 WebP；安装页面会检测 GD 和 WebP 支持。
+4. PHP 上传限制设为 upload_max_filesize=50M、post_max_size=64M，保存并重启 PHP。
+
+二、上传程序
+5. 在宝塔“网站”中添加网站，填写自己的域名，PHP 版本选择 8.2。
+6. 同时新建一个空 MySQL 数据库，记下数据库名、用户名和密码。
+7. 上传本程序包到网站目录并解压，删除宝塔默认的 index.html。
+8. 网站运行目录必须直接包含 index.php、app、config、vendor。
+   不要设置为 public，也不要让源码外面多套一层文件夹。
+
+三、设置网站
+9. 打开“网站 → 设置 → 配置文件”，找到现有 server 配置块。
+10. 将包内 nginx-site.conf.example 的完整内容合入该 server 块。
+    保留自己的域名、root 网站目录和 HTTPS 证书配置。
+11. 删除原来的通用 PHP 配置 include（如 enable-php-82.conf），用示例的 PHP 入口代替。
+    示例 socket 为 /tmp/php-cgi-82.sock，若宝塔实际地址不同，请改为实际 PHP 8.2 地址。
+12. 如原配置已有同名 location，请替换；“伪静态”中不要再重复添加同一规则。
+    保存配置后，首页、商品页及 .html 页面都由 index.php 处理。
+13. 在宝塔文件管理中，将网站文件所有者设为 www，目录一般 755、文件一般 644。
+    确保 config、runtime、assets/cache、kernel/Install 及后台插件/主题目录可由 www 写入。
+
+四、网页安装数据库
+14. 浏览器访问 https://你的域名/index.php（未配置 HTTPS 时先用 http）。
+15. 环境检查通过后填写数据库：地址 127.0.0.1、端口 3306、数据库名、用户名、密码。
+    表前缀可保持 acg_；点击“测试连接”。
+16. 填写管理员邮箱、昵称和密码，点击“开始安装”。
+    程序会自动建表并写入初始数据，无需手动导入 SQL，也无需运行 Composer 或 npm。
+17. 安装完成后访问 /admin，登录并配置店铺、商品、轮播图片、联系方式和支付参数。
+
+注意：本包用于新站安装，请使用空数据库，不要覆盖现有业务数据库。
+安装后请保留 kernel/Install/Lock；目录不可写或缺少扩展时，按安装页面提示处理。

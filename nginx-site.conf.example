@@ -1,0 +1,23 @@
+# Merge inside the BaoTa website's existing server {} block.
+# Use its configured root and PHP 8.2+ FPM socket. Replace the generic PHP regex
+# include with this single-entry location, then run nginx -t before reload.
+index index.php;
+client_max_body_size 64m; # Transport overhead; application still enforces 50 MiB per file.
+
+# Block PHP PATH_INFO and every PHP file except the application front controller.
+if ($uri ~* "^/(?!index\.php(/|$)).*\.php(/|$)") { return 404; }
+location = /index.php {
+    include fastcgi_params;
+    fastcgi_param SCRIPT_FILENAME $document_root/index.php;
+    fastcgi_param HTTPS $https if_not_empty;
+    fastcgi_pass unix:/tmp/php-cgi-82.sock; # Match the actual BaoTa PHP socket.
+    fastcgi_read_timeout 120;
+}
+# The packaged theme serves its static files from this source-tree asset folder.
+# Keep the extension allowlist before the general /app denial. No templates/PHP.
+location ~ ^/app/View/User/Theme/LocalStar/Assets/.*\.(css|js|svg|png|jpg|jpeg|gif|webp|ico|woff|woff2|ttf|otf|eot|json|mp4)$ { try_files $uri =404; }
+location ~ ^/(app|config|kernel|runtime|vendor|tests|scripts|tools|docs|database)(/|$) { return 404; }
+location ~ /\.(?!well-known) { return 404; }
+location ~* \.(log|sql|sqlite|db|bak|old|save|orig|swp|tmp|ini|lock|pem|key)$ { return 404; }
+location ~* (~|composer\.(json|lock)|package(-lock)?\.json)$ { return 404; }
+location / { try_files $uri $uri/ /index.php?s=$uri&$args; }

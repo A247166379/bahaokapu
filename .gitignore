@@ -1,0 +1,34 @@
+# Local editor and system files
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Private environment files, logs and temporary backups
+.env
+.env.*
+!.env.example
+*.log
+*.sql.tmp
+*.bak
+*.sqlite
+*.sqlite3
+
+# Generated dependencies for optional development tools
+/node_modules/
+
+# Runtime data and generated install files
+/runtime/*
+!/runtime/.gitkeep
+/assets/cache/*
+!/assets/cache/.gitkeep
+/kernel/Install/Lock
+/kernel/Plugin.php
+/kernel/Install/OS/*
+!/kernel/Install/OS/.gitkeep
+/kernel/Install/Update/*
+!/kernel/Install/Update/.gitkeep
+
+# Keep vendor in this upload-and-install distribution.
+# config/database.php is intentionally shipped blank. Check it before each commit.
