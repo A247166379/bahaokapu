@@ -1,0 +1,12 @@
+#{include file="./Header.html"}
+<script src="/app/View/User/Theme/LocalStar/Assets/Commerce.js?v=vietnamese-20261004-r1"></script>
+<link rel="stylesheet" href="/app/View/User/Theme/LocalStar/Assets/Checkout.css?v=responsive-r4-20261002">
+<main id="store-main" class="store-orders" data-store-orders data-order="#{$tradeNo|escape:'html'}">
+    <h1>#{t("订单查询")}</h1>
+    <form class="store-query-form"><input type="search" name="keywords" value="#{$tradeNo|escape:'html'}" required placeholder="#{t('订单号或联系方式')}" aria-label="#{t('订单号或联系方式')}" autocomplete="off"><button class="store-buy-button" type="submit">#{t("查询订单")}</button></form>
+    <div class="store-orders-state" role="status" aria-live="polite"></div>
+    <div class="store-order-list"></div>
+    <div class="store-orders-pagination" hidden><button type="button" class="store-orders-prev">#{t("上一页")}</button><span class="store-orders-page"></span><button type="button" class="store-orders-next">#{t("下一页")}</button></div>
+</main>
+#{ready("/app/View/User/Theme/LocalStar/Assets/Orders.js?rev=site-audit-20261005-r1")}
+#{include file="./Footer.html"}

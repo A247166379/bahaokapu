@@ -1,0 +1,206 @@
+#{include file="../Header.html"}
+<style>
+    :root[data-theme] .md-config-send-test {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        direction: ltr;
+    }
+
+    :root[data-theme] .md-config-send-test .md-message-send-icon {
+        margin: 0;
+        vertical-align: 0;
+    }
+
+    @media (max-width: 991.98px) {
+        html[data-admin-layout="mobile"] .md-config-test-layer .layui-layer-input {
+            box-sizing: border-box;
+            width: 100%;
+            height: 52px;
+            border: 0;
+            border-radius: 16px;
+            padding: 0 16px;
+            background: var(--admin-mobile-surface-2);
+            color: var(--admin-mobile-text);
+            font-size: 16px;
+            outline: 0;
+        }
+
+        html[data-admin-layout="mobile"] .md-config-test-layer .layui-layer-input:focus {
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--admin-mobile-primary) 20%, transparent);
+        }
+    }
+</style>
+
+<!--begin::Content-->
+<div class="content d-flex flex-column flex-column-fluid" id="kt_content">
+    <!--begin::Toolbar-->
+    #{include file="../Toolbar.html"}
+    <!--end::Toolbar-->
+    <!--begin::Post-->
+    <div class="post d-flex flex-column-fluid" id="kt_post">
+        <!--begin::Container-->
+        <div id="kt_content_container" class="container-xxl md-settings">
+            <!--begin::Basic info-->
+            <div class="card mb-5 mb-xl-10">
+                <!--begin::Card header-->
+                <div class="card-header border-0 cursor-pointer">
+                    <!--begin::Card title-->
+                    <div class="card-title m-0">
+                        <h3 class="fw-bolder m-0">#{t("SMTP配置")}</h3>
+                    </div>
+                    <!--end::Card title-->
+                </div>
+                <!--begin::Card header-->
+                <!--begin::Content-->
+                <div id="kt_account_profile_details" class="collapse show">
+                    <!--begin::Form-->
+                    <form id="data-form" method="post" class="form" data-admin-mobile-settings-page="email">
+                        <!--begin::Card body-->
+                        <div class="card-body p-9">
+                            <h2 class="admin-mobile-settings-section-title" id="mobile-email-service"
+                                data-admin-mobile-description="配置发信服务器、加密方式、端口和邮箱账号，用于系统邮件通知。">#{t("SMTP 邮件服务")}</h2>
+                            <!--begin::Alert-->
+                            <div class="alert alert-dismissible bg-light-primary d-flex flex-column flex-sm-row p-5 mb-10">
+                                <!--begin::Icon-->
+                                <span class="me-4 mb-5 mb-sm-0"><i class="fa-duotone fa-regular fa-bell"></i></span>
+                                <!--end::Icon-->
+                                <!--begin::Wrapper-->
+                                <div class="d-flex flex-column pe-0 pe-sm-10">
+                                    <!--begin::Content-->
+                                    <span>#{t("本系统默认内置SMTP发信功能，如果你想使用其他邮件服务，请通过安装插件来使用。")}</span>
+                                    <!--end::Content-->
+                                </div>
+                                <!--end::Wrapper-->
+                            </div>
+                            <!--end::Alert-->
+
+                            <!--begin::Input group-->
+                            <div class="row mb-6">
+                                <!--begin::Label-->
+                                <label class="col-lg-4 col-form-label required fw-bold fs-6">#{t("SMTP服务器")}</label>
+                                <!--end::Label-->
+                                <!--begin::Col-->
+                                <div class="col-lg-8 fv-row">
+                                    <input type="text" name="smtp"
+                                           class="form-control form-control-lg form-control-solid"
+                                           placeholder="#{t('请输入smtp服务器地址')}" value="#{$email.smtp|escape:'html'}"/>
+                                </div>
+                                <!--end::Col-->
+                            </div>
+                            <!--end::Input group-->
+
+                            <!--begin::Input group-->
+                            <div class="row mb-6">
+                                <!--begin::Label-->
+                                <label class="col-lg-4 col-form-label required fw-bold fs-6">#{t("通信加密协议")}</label>
+                                <!--end::Label-->
+                                <!--begin::Col-->
+                                <div class="col-lg-8 fv-row">
+                                    <!--begin::Input-->
+                                    <select name="secure" class="form-select form-select-solid form-select-lg"
+                                            data-control="select2" data-hide-search="true">
+                                        <option value="0" #{if $email.secure == 0} selected #{/if}>SSL</option>
+                                        <option value="1" #{if $email.secure == 1} selected #{/if}>TLS</option>  
+                                    </select>
+                                    <!--end::Input-->
+                                </div>
+                                <!--end::Col-->
+                            </div>
+                            <!--end::Input group-->
+
+                            <!--begin::Input group-->
+                            <div class="row mb-6">
+                                <!--begin::Label-->
+                                <label class="col-lg-4 col-form-label required fw-bold fs-6">#{t("端口")}</label>
+                                <!--end::Label-->
+                                <!--begin::Col-->
+                                <div class="col-lg-8 fv-row">
+                                    <input type="text" name="port"
+                                           inputmode="numeric"
+                                           pattern="[0-9]+"
+                                           class="form-control form-control-lg form-control-solid"
+                                           placeholder="#{t('请输入端口')}" value="#{$email.port|escape:'html'}"/>
+                                </div>
+                                <!--end::Col-->
+                            </div>
+                            <!--end::Input group-->
+
+
+                            <!--begin::Input group-->
+                            <div class="row mb-6">
+                                <!--begin::Label-->
+                                <label class="col-lg-4 col-form-label required fw-bold fs-6">#{t("用户名")}</label>
+                                <!--end::Label-->
+                                <!--begin::Col-->
+                                <div class="col-lg-8 fv-row">
+                                    <input type="text" name="username"
+                                           class="form-control form-control-lg form-control-solid"
+                                           placeholder="#{t('请输入用户名')}" value="#{$email.username|escape:'html'}"/>
+                                </div>
+                                <!--end::Col-->
+                            </div>
+                            <!--end::Input group-->
+
+
+                            <!--begin::Input group-->
+                            <div class="row mb-6">
+                                <!--begin::Label-->
+                                <label class="col-lg-4 col-form-label fw-bold fs-6">#{t("发件人邮箱")}</label>
+                                <!--end::Label-->
+                                <!--begin::Col-->
+                                <div class="col-lg-8 fv-row">
+                                    <input type="text" name="from"
+                                           inputmode="email" autocapitalize="none" spellcheck="false"
+                                           class="form-control form-control-lg form-control-solid"
+                                           placeholder="#{t('留空则与用户名相同')}" value="#{$email.from|default:''|escape:'html'}"/>
+                                    <div class="form-text">#{t("部分SMTP服务商的登录用户名与发件邮箱不同，此处填写实际的发件邮箱地址。")}</div>
+                                </div>
+                                <!--end::Col-->
+                            </div>
+                            <!--end::Input group-->
+
+
+                            <!--begin::Input group-->
+                            <div class="row mb-6">
+                                <!--begin::Label-->
+                                <label class="col-lg-4 col-form-label required fw-bold fs-6">#{t("授权码")}</label>
+                                <!--end::Label-->
+                                <!--begin::Col-->
+                                <div class="col-lg-8 fv-row">
+                                    <input type="password" name="password"
+                                           class="form-control form-control-lg form-control-solid"
+                                           autocomplete="new-password" autocapitalize="none" spellcheck="false"
+                                           maxlength="1024"
+                                           placeholder="#{t('留空则保留现有授权码')}" value=""/>
+                                </div>
+                                <!--end::Col-->
+                            </div>
+                            <!--end::Input group-->
+
+                        </div>
+                        <!--end::Card body-->
+                        <!--begin::Actions-->
+                        <div class="card-footer d-flex justify-content-center py-6 px-9">
+                            <button type="button" class="btn btn-success send-test-message md-config-send-test m-1"><svg class="md-message-send-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3.5 6.5h10a2 2 0 0 1 2 2v2.25M3.5 7l5 4 5-4M3.5 6.5v9a2 2 0 0 0 2 2h7.25M14 14h6m-2.5-2.5L20 14l-2.5 2.5"/></svg><span>#{t("发送测试邮件")}</span>
+                            </button>
+                            <button type="button" class="btn btn-primary save-data m-1"><i class="fa-duotone fa-regular fa-floppy-disk me-2"></i>#{t("保存设置")}</button>
+                        </div>
+                        <!--end::Actions-->
+                    </form>
+                    <!--end::Form-->
+                </div>
+                <!--end::Content-->
+            </div>
+            <!--end::Basic info-->
+        </div>
+        <!--end::Container-->
+    </div>
+    <!--end::Post-->
+</div>
+<!--end::Content-->
+
+
+#{ready("/assets/admin/controller/config/mail.js")}
+#{include file="../Footer.html"}

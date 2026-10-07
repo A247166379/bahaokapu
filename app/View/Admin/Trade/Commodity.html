@@ -1,0 +1,57 @@
+#{include file="../Header.html"}
+<!--begin::Content-->
+<div class="content d-flex flex-column flex-column-fluid">
+    <!--begin::Toolbar-->
+    #{include file="../Toolbar.html"}
+    <!--end::Toolbar-->
+    <!--begin::Post-->
+    <div class="post d-flex flex-column-fluid">
+        <!--begin::Container-->
+        <div id="kt_content_container" class="container-fluid">
+            <!--begin::Row-->
+            <h2 class="admin-mobile-only-section">#{t("商品概览")}</h2>
+            <div class="md-stat-grid" data-admin-mobile-stats="mini" role="region" aria-label="#{t('商品数据概览')}">
+                #{include file="../Component/StatCard.html" accent="primary" icon="fa-box" label="总商品" value=$all}
+                #{include file="../Component/StatCard.html" accent="success" icon="fa-boxes" label="已上架" value=$shelves}
+                #{include file="../Component/StatCard.html" accent="danger" icon="fa-box" label="未上架" value=$not}
+            </div>
+            <!--end::Row-->
+
+            <!--begin::Tables Widget 9-->
+            <h2 class="admin-mobile-only-section">#{t("商品列表")}</h2>
+            <div class="card mb-5 mb-xl-8">
+                <!--begin::Header-->
+                <div class="card-header border-0">
+                    <div class="card-toolbar">
+                        <button class="btn btn-sm btn-light-primary btn-app-create me-3"><i class="fa-duotone fa-regular fa-circle-plus"></i>
+                            #{t("添加商品")}
+                        </button>
+                        <button class="btn btn-sm btn-light-success listed me-3"><i class="fa-duotone fa-regular fa-up-from-bracket"></i>
+                            #{t("上架选中商品")}
+                        </button>
+                        <button class="btn btn-sm btn-light-dark delist me-3"><i class="fa-duotone fa-regular fa-down-to-bracket"></i>
+                            #{t("下架选中商品")}
+                        </button>
+                        <button class="btn btn-sm btn-light-primary handle me-3"><i class="fa-duotone fa-regular fa-rotate"></i>
+                            #{t("一键操作选中商品")}
+                        </button>
+                        <button class="btn btn-sm btn-light-danger btn-app-del me-3"><i class="fa-duotone fa-regular fa-trash-can"></i> #{t("移除选中商品")}
+                        </button>
+                    </div>
+                </div>
+                <!--end::Header-->
+                <div class="card-body py-3">
+                    <table id="commodity-table"></table>
+                </div>
+            </div>
+
+            <!--end::Tables Widget 9-->
+        </div>
+        <!--end::Container-->
+    </div>
+    <!--end::Post-->
+</div>
+<!--end::Content-->
+#{ready("/assets/admin/controller/trade/drag-sort.js?rev=mobile-1")}
+#{ready("/assets/admin/controller/trade/commodity.js?rev=product-icon-20261005-r1")}
+#{include file="../Footer.html"}

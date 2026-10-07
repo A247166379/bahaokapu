@@ -1,0 +1,40 @@
+#{include file="./Header.html"}
+#{if $page.type == 'help' || $page.type == 'helpArticle' || $page.type == 'sitemap'}<link rel="stylesheet" href="/app/View/User/Theme/LocalStar/Assets/Help.css?rev=articles-sitemap-20261002-r2">#{/if}
+<main class="ls-main store-content-page#{if $page.type == 'help' || $page.type == 'helpArticle' || $page.type == 'sitemap'} store-help-page#{/if}#{if $page.type == 'sitemap'} store-sitemap#{/if}" id="store-main">
+    <div class="ls-shell store-content-shell">
+        <nav class="store-breadcrumb" aria-label="#{t('当前位置')}"><a href="#{store_url('/')}">#{t("首页")}</a><span aria-hidden="true">/</span>#{if $page.type == 'helpArticle'}<a href="#{store_url('/help')}">#{t("帮助中心")}</a><span aria-hidden="true">/</span>#{/if}<span aria-current="page">#{$page.title}</span></nav>
+        #{if $page.type == 'sitemap'}
+        <section class="store-help-card" aria-labelledby="store-help-title">
+            <header class="store-help-heading"><h1 id="store-help-title">#{$page.title}</h1></header>
+            #{$page.body}
+        </section>
+        #{elseif $page.type == 'help'}
+        <section class="store-help-card" aria-labelledby="store-help-title">
+            <header class="store-help-heading"><h1 id="store-help-title">#{$page.title}</h1></header>
+            #{if $entries}
+            <ul class="store-help-list">
+                #{foreach $entries as $entry}
+                <li><a class="store-help-link" href="#{$entry.helpUrl}"><div class="store-help-link-text"><h2>#{$entry.title}</h2>#{if $entry.helpSummary}<p>#{$entry.helpSummary}</p>#{/if}</div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></a></li>
+                #{/foreach}
+            </ul>
+            #{else}<p class="store-help-empty">#{t("暂无内容")}</p>#{/if}
+        </section>
+        #{elseif $page.type == 'helpArticle'}
+        <article class="store-help-card store-help-article" aria-labelledby="store-help-title">
+            <header class="store-help-heading"><h1 id="store-help-title">#{$page.title}</h1>#{if $page.helpSummary && !$page.missing}<p class="store-help-summary">#{$page.helpSummary}</p>#{/if}</header>
+            #{if $page.body && !$page.missing}<div class="store-rich store-help-body">#{$page.body}</div>#{/if}
+            <footer class="store-help-article-footer"><a href="#{store_url('/help')}"><span aria-hidden="true">←</span>#{t("帮助中心")}</a></footer>
+        </article>
+        #{else}
+        <section class="store-content-card">
+            <h1>#{$page.title}</h1>
+            #{if $page.body}<div class="store-rich store-page-body">#{$page.body}</div>#{/if}
+            #{if $page.type == 'articles'}
+                <div class="store-article-index">#{foreach $entries as $entry}<a href="#{store_page_url('help',$entry.slug)}"><h2>#{$entry.title}</h2>#{if $entry.summary}<p>#{$entry.summary}</p>#{/if}<span aria-hidden="true">→</span></a>#{/foreach}</div>
+            #{/if}
+            #{if !$entries && !$page.body && $page.type != 'contact'}<p class="store-list-message">#{t("暂无内容")}</p>#{/if}
+        </section>
+        #{/if}
+    </div>
+</main>
+#{include file="./Footer.html"}

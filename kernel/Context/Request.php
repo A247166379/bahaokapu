@@ -1,0 +1,57 @@
+<?php
+declare (strict_types=1);
+
+namespace Kernel\Context;
+
+use App\Util\Client;
+
+class Request extends Abstract\Request
+{
+    public function __construct()
+    {
+        $this->_unsafe_post = $this->post = $_POST;
+        $this->method = strtoupper($_SERVER['REQUEST_METHOD']);
+        $this->_unsafe_get = $this->get = $_GET;
+        $this->header = $this->parseHeader();
+        $this->cookie = $_COOKIE;
+        $uri = "/" . trim($_GET['s'] ?? "/", "/");
+        $uris = explode(".", $uri);
+        $this->uri = (string)$uris[0];
+        $this->uriSuffix = $uris[1] ?? "";
+        $this->raw = (string)file_get_contents("php://input");
+        $this->files = $_FILES;
+        unset($this->get['_route']);
+
+        $this->clientIp = Client::getAddress();
+
+        if (str_contains((string)$this->header("ContentType"), "application/json")) {
+            $this->_unsafe_json = $this->json = (array)json_decode($this->raw, true);
+        }
+
+        $this->header['Scheme'] = Client::getRequestScheme();
+
+        $this->url = $this->header['Origin'] ?? $this->header['Scheme'] . '://' . $this->header['Host'];
+        $this->domain = (string)explode(":", (string)$_SERVER['HTTP_HOST'])[0];
+
+        parent::__construct();
+    }
+
+
+    /**
+     * @return array
+     */
+    private function parseHeader(): array
+    {
+        $headers = [];
+        foreach ($_SERVER as $key => $value) {
+            if (str_starts_with($key, 'HTTP_')) {
+                $key = substr($key, 5);
+                $key = str_replace('_', ' ', $key);
+                $key = ucwords(strtolower($key));
+                $key = str_replace(" ", "", $key);
+                $headers[$key] = $value;
+            }
+        }
+        return $headers;
+    }
+}

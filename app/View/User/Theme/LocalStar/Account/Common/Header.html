@@ -1,0 +1,8 @@
+#{include file="../../Index/Header.html"}
+<main id="store-main" class="store-account">
+    <div class="uc-nav-wrap">
+        <nav class="uc-nav" aria-label="#{t('个人中心')}">
+            #{include file="./Nav.html"}
+            <a class="uc-nav__link logout" href="#{store_url('/user/authentication/logout')}"><span class="material-icons-outlined" aria-hidden="true">logout</span>#{t("退出登录")}</a>
+        </nav>
+    </div>

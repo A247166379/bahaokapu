@@ -1,0 +1,49 @@
+#{include file="../Header.html"}
+<div class="content d-flex flex-column flex-column-fluid" id="kt_content">
+    #{include file="../Toolbar.html"}
+    <div class="post d-flex flex-column-fluid" id="kt_post">
+        <div id="kt_content_container" class="container-xxl" data-admin-mobile-action-placement="inline">
+            #{include file="./LocaleLinks.html"}
+            <section class="card mb-5">
+                <div class="card-body">
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-5">
+                        <h2 class="fs-4 mb-0">首页内容</h2>
+                        <a class="btn btn-sm btn-light" href="/index.html" target="_blank" rel="noopener">查看网站</a>
+                    </div>
+                    <a class="btn btn-primary mb-5" href="/index.html" target="_blank" rel="noopener">预览首页</a>
+                    <a class="btn btn-light-primary mb-5 ms-2" href="/admin/autoTranslate/index">自动翻译</a>
+                    <div class="row g-3">
+                        <div class="col-sm-6"><a class="btn btn-light w-100 text-start" href="/admin/storeContent/index?type=announcement">店铺公告</a></div>
+                        <div class="col-sm-6"><a class="btn btn-light w-100 text-start" href="/admin/storeContent/index?type=banner">轮播图片</a></div>
+                        <div class="col-sm-6"><a class="btn btn-light w-100 text-start" href="/admin/storeContent/index?type=tip">温馨提示</a></div>
+                        <div class="col-sm-6"><a class="btn btn-light w-100 text-start" href="/admin/storeContent/index?type=contact">联系方式</a></div>
+                        <div class="col-sm-6"><a class="btn btn-light w-100 text-start" href="/admin/storeContent/index?type=article">文章中心</a></div>
+                        <div class="col-sm-6"><a class="btn btn-light w-100 text-start" href="/admin/storeContent/index?type=navigation">顶部菜单与快捷入口</a></div>
+                        <div class="col-sm-6"><a class="btn btn-light w-100 text-start" href="/admin/storeContent/index?type=policy">服务条款与隐私说明</a></div>
+                        <div class="col-sm-6"><a class="btn btn-light w-100 text-start" href="/admin/storeContent/index?type=footer">右侧政策链接</a></div>
+                    </div>
+                    <p class="text-muted mt-5 mb-0">站名、LOGO、关键词、微信二维码和备案号在 <a href="/admin/config/index">基础设置</a> 中修改。</p>
+                </div>
+            </section>
+            <section class="card mb-5">
+                <div class="card-body">
+                    <h2 class="fs-4 mb-4">支付</h2>
+                    <div class="d-flex flex-wrap gap-3">
+                        <a class="btn btn-light" href="/admin/pay/index">支付接口</a>
+                        <a class="btn btn-light" href="/admin/pay/plugin">已安装支付插件</a>
+                    </div>
+                    <details class="border-top pt-4 mt-5">
+                        <summary class="fw-bold cursor-pointer">五种语言</summary>
+                        <div class="d-flex flex-wrap gap-3 mt-4">
+                            <a class="btn btn-sm btn-light" href="/admin/storeContent/index?mode=entity&amp;entity=commodity">商品与表单译文</a>
+                            <a class="btn btn-sm btn-light" href="/admin/storeContent/index?mode=entity&amp;entity=category">分类译文</a>
+                            <a class="btn btn-sm btn-light" href="/admin/storeContent/index?mode=entity&amp;entity=config">站点译文</a>
+                            <a class="btn btn-sm btn-light" href="/admin/lang/index">按钮与系统文字</a>
+                        </div>
+                    </details>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+#{include file="../Footer.html"}

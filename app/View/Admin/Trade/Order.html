@@ -1,0 +1,94 @@
+#{include file="../Header.html"}
+
+<style>
+    :root[data-theme] .md-stat-grid.order-stat-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    @media (max-width: 1200px) {
+        :root[data-theme] .md-stat-grid.order-stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    html[data-admin-layout="mobile"][data-theme] .order-stat-grid[data-admin-mobile-stats="mini"] { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+    @media (max-width: 991.98px) {
+        html[data-admin-layout="mobile"] .md-order-secret-layer .md-secret {
+            gap: 18px;
+            padding: 2px 0 0;
+        }
+
+        html[data-admin-layout="mobile"] .md-order-secret-layer .md-secret__code {
+            max-height: min(46dvh, 380px);
+            border: 0;
+            border-radius: 16px;
+            padding: 16px;
+        }
+
+        html[data-admin-layout="mobile"] .md-order-secret-layer .md-secret__bar {
+            display: grid;
+            grid-template-columns: 1fr 1.4fr;
+        }
+
+        html[data-admin-layout="mobile"] .md-order-secret-layer .md-secret__btn {
+            min-height: 50px;
+            justify-content: center;
+            padding-inline: 10px;
+        }
+
+        html[data-admin-layout="mobile"] .md-order-widget-detail .md-detail__row {
+            grid-template-columns: minmax(82px, 32%) minmax(0, 1fr);
+        }
+    }
+</style>
+
+<!--begin::Content-->
+<div class="content d-flex flex-column flex-column-fluid" id="kt_content">
+    <!--begin::Toolbar-->
+    #{include file="../Toolbar.html"}
+    <!--end::Toolbar-->
+    <!--begin::Post-->
+    <div class="post d-flex flex-column-fluid" id="kt_post">
+        <!--begin::Container-->
+        <div id="kt_content_container" class="container-fluid">
+            <!--begin::Row-->
+            <h2 class="admin-mobile-only-section">#{t("订单概览")}</h2>
+            <div class="md-stat-grid order-stat-grid" data-admin-mobile-stats="mini" role="region" aria-label="#{t('订单数据概览')}">
+                #{include file="../Component/StatCard.html" accent="primary" icon="fa-receipt" label="订单数量" vclass="order_count" value="—"}
+                #{include file="../Component/StatCard.html" accent="success" icon="fa-circle-dollar" label="订单金额" vclass="order_amount" value="—"}
+                #{include file="../Component/StatCard.html" accent="primary" icon="fa-check-circle" label="已付款数量" vclass="paid_count" value="—"}
+                #{include file="../Component/StatCard.html" accent="success" icon="fa-circle-dollar" label="已付款金额" vclass="paid_amount" value="—"}
+            </div>
+            <!--end::Row-->
+
+            <!--begin::Tables Widget 9-->
+            <h2 class="admin-mobile-only-section">#{t("订单列表")}</h2>
+            <div class="card mb-5 mb-xl-8">
+                <!--begin::Header-->
+                <div class="card-header border-0">
+                    <div class="card-toolbar">
+                        <button class="btn btn-sm btn-light-primary clear me-3"><i class="fa-duotone fa-regular fa-trash-can-clock"></i>
+                            #{t("一键清理无用订单")}
+                        </button>
+                        <button class="btn btn-sm btn-light-success btn-app-export me-3"><i class="fa-duotone fa-regular fa-down-to-line"></i>
+                            #{t("导出筛选订单")}
+                        </button>
+                        <!--start::HOOK-->
+                        #{hook(\App\Consts\Hook::ADMIN_VIEW_ORDER_TOOLBAR)}
+                        <!--end::HOOK-->
+                        <span class="badge badge-light-primary fs-8">#{t("Tips：上方订单数据显示会根据下方的查询条件进行筛选显示。")}</span>
+                    </div>
+                </div>
+                <!--end::Header-->
+
+                <div class="card-body py-3">
+                    <table id="order-table"></table>
+                </div>
+            </div>
+
+            <!--end::Tables Widget 9-->
+        </div>
+        <!--end::Container-->
+    </div>
+    <!--end::Post-->
+</div>
+<!--end::Content-->
+<!--start::HOOK-->
+#{hook(\App\Consts\Hook::ADMIN_VIEW_ORDER_FOOTER)}
+<!--end::HOOK-->
+#{ready("/assets/admin/controller/trade/order.js?rev=principles-fixes-20261007-r1")}
+#{include file="../Footer.html"}

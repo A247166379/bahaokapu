@@ -1,0 +1,29 @@
+#{include file="../Header.html"}
+#{css("/assets/admin/controller/pay/settings.css?rev=payment-visibility-20261004-r1")}
+#{css("/assets/admin/controller/pay/plugin-catalog.css?rev=payment-settings-20261004-r1")}
+<div class="content d-flex flex-column flex-column-fluid" id="kt_content">
+    #{include file="../Toolbar.html"}
+    <div class="post d-flex flex-column-fluid" id="kt_post">
+        <main id="kt_content_container" class="container-fluid pay-settings">
+            <div class="pay-settings__tabs" role="tablist" aria-label="支付设置分类">
+                <button id="pay-tab-methods" type="button" role="tab" data-pay-tab="methods" aria-controls="pay-method-panel" aria-selected="true">支付方式</button>
+                <button id="pay-tab-plugins" type="button" role="tab" data-pay-tab="plugins" aria-controls="pay-plugin-panel" aria-selected="false" tabindex="-1">支付插件</button>
+            </div>
+            <p id="pay-settings-status" class="pay-settings__status text-muted" role="status" aria-live="polite">正在加载支付设置…</p>
+            <div id="pay-settings-error" class="alert alert-danger" role="alert" hidden></div>
+            <button id="pay-settings-retry" class="btn btn-sm btn-light-primary pay-settings__retry" type="button" hidden>重新加载</button>
+            <section id="pay-method-panel" role="tabpanel" aria-labelledby="pay-tab-methods" tabindex="0">
+                <p class="pay-settings__intro text-muted">启用的支付方式会显示在结账页。选择支付插件和收款配置，保存后生效。</p>
+                <div id="pay-methods" class="pay-settings__grid"></div>
+            </section>
+            <section id="pay-plugin-panel" role="tabpanel" aria-labelledby="pay-tab-plugins" tabindex="0" hidden>
+                <p class="pay-settings__intro text-muted">已安装的支付插件可在这里配置，再到支付方式中选择使用。</p>
+                <div id="pay-plugin-catalog"></div>
+            </section>
+        </main>
+    </div>
+</div>
+#{ready("/assets/admin/controller/pay/plugin.js?rev=usdt-auto-20261004-r1")}
+#{ready("/assets/admin/controller/pay/plugin-catalog.js?rev=payment-settings-20261004-r1")}
+#{ready("/assets/admin/controller/pay/settings.js?rev=payment-settings-20261004-r1")}
+#{include file="../Footer.html"}

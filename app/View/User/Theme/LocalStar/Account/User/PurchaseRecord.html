@@ -1,0 +1,15 @@
+#{include file="../Common/Header.html"}
+<div class="uc-main">
+    <div class="uc-card">
+        <div class="uc-card__head">
+            <span class="material-icons-outlined">shopping_bag</span>
+            <span class="uc-card__title">#{t("购买记录")}</span>
+        </div>
+        <div class="uc-card__body">
+            <table id="bill-table"></table>
+        </div>
+    </div>
+</div>
+
+#{ready("/app/View/User/Theme/LocalStar/Assets/AccountOrders.js?rev=buyer-20261002-r1")}
+#{include file="../Common/Footer.html"}

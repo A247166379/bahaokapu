@@ -1,0 +1,13 @@
+#{include file="../Common/Header.html"}
+<div class="uc-main">
+    <div class="uc-card">
+        <div class="uc-card__head"><span class="uc-card__title">#{t("我的主页")}</span></div>
+        <div class="uc-card__body">
+            <div class="buyer-shortcuts">
+                <a href="#{store_url('/user/personal/purchaseRecord')}"><span class="material-icons-outlined" aria-hidden="true">shopping_bag</span><span>#{t("购买记录")}</span><span class="material-icons-outlined" aria-hidden="true">arrow_forward</span></a>
+                <a href="#{store_url('/user/security/personal')}"><span class="material-icons-outlined" aria-hidden="true">person</span><span>#{t("个人资料")}</span><span class="material-icons-outlined" aria-hidden="true">arrow_forward</span></a>
+            </div>
+        </div>
+    </div>
+</div>
+#{include file="../Common/Footer.html"}

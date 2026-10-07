@@ -1,0 +1,29 @@
+#{include file="../Common/Header.html"}
+<div class="uc-main">
+    <div class="uc-card">
+        <div class="uc-card__body">
+            #{include file="../Common/SecurityNav.html"}
+            <form class="layui-form form-data" method="post">
+                <div class="form-block">
+                    <div><label class="form-header" for="buyer-avatar-file">#{t("头像")}</label><div class="form-body">
+                        <input id="buyer-avatar-file" type="file" class="avatar-input" accept="image/*" hidden>
+                        <input type="hidden" name="avatar" value="#{$user.avatar}">
+                        <button type="button" class="buyer-avatar-button" data-acg-proxy=".avatar-input" aria-label="#{t('点击修改')}"><img class="avatar-img uc-avatar-edit" src="#{if $user.avatar}#{$user.avatar}#{else}/favicon.ico#{/if}" alt=""></button>
+                    </div></div>
+                    <div><label class="form-header" for="buyer-qq">#{t("QQ 号")}</label><div class="form-body"><input id="buyer-qq" type="text" inputmode="numeric" maxlength="16" value="#{$user.qq}" name="qq" autocomplete="off" placeholder="#{t('请输入 QQ 号')}" class="layui-input"></div></div>
+                    <div><label class="form-header" for="buyer-name">#{t("真实姓名")}</label><div class="form-body"><input id="buyer-name" type="text" maxlength="10" value="#{$user.nicename}" name="nicename" autocomplete="name" placeholder="#{t('请输入您的真实姓名')}" class="layui-input"></div></div>
+                    <div><button type="button" class="uc-cta save-data">#{t("保存修改")}</button></div>
+                </div>
+            </form>
+            <div class="uc-info buyer-login-info">
+                <div class="uc-info__row"><div class="uc-info__k">#{t("用户名")}</div><div class="uc-info__v">#{$user.username}</div></div>
+                <div class="uc-info__row"><div class="uc-info__k">#{t("登录 IP 地址")}</div><div class="uc-info__v">#{$user.login_ip}</div></div>
+                <div class="uc-info__row"><div class="uc-info__k">#{t("登录时间")}</div><div class="uc-info__v">#{$user.login_time}</div></div>
+                <div class="uc-info__row"><div class="uc-info__k">#{t("上次登录 IP")}</div><div class="uc-info__v">#{if $user.last_login_ip}#{$user.last_login_ip}#{else}-#{/if}</div></div>
+                <div class="uc-info__row"><div class="uc-info__k">#{t("上次登录时间")}</div><div class="uc-info__v">#{if $user.last_login_time}#{$user.last_login_time}#{else}-#{/if}</div></div>
+            </div>
+        </div>
+    </div>
+</div>
+#{ready("/app/View/User/Theme/LocalStar/Assets/AccountPersonal.js?rev=buyer-20261002-r1")}
+#{include file="../Common/Footer.html"}

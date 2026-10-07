@@ -1,0 +1,63 @@
+/* Article-based help center. Isolated from checkout, contact and policy pages. */
+.localstar-body .store-help-page { padding-top: 32px; padding-bottom: 48px; }
+.store-help-page .store-content-shell { width: min(920px, calc(100% - 32px)); max-width: 920px; min-width: 0; }
+.store-help-page .store-breadcrumb { margin-bottom: 16px; line-height: 1.6; font-size: 12px; }
+.store-help-page .store-breadcrumb a:hover { color: var(--ls-ink); }
+.store-help-page .store-breadcrumb [aria-current="page"] { min-width: 0; overflow-wrap: anywhere; }
+.store-help-card { border: 1px solid var(--ls-line); border-radius: 12px; background: var(--ls-surface); overflow: hidden; min-width: 0; }
+.store-help-heading { padding: 25px 30px 22px; }
+.store-help-heading h1 { margin: 0; color: var(--ls-ink); font-size: 25px; font-weight: 600; line-height: 1.4; overflow-wrap: anywhere; }
+.store-help-list { padding: 0; margin: 0; list-style: none; }
+.store-help-list li { list-style: none; margin: 0; border-top: 1px solid var(--ls-line); }
+.store-help-link { display: flex; align-items: center; gap: 24px; padding: 19px 30px; min-height: 66px; color: var(--ls-ink); transition: background-color .15s ease; }
+.store-help-link:hover { color: var(--ls-ink); background: var(--ls-canvas); }
+.store-help-link:focus-visible, .store-help-article-footer a:focus-visible { outline: 2px solid var(--ls-ink); outline-offset: -3px; border-radius: 4px; }
+.store-help-link-text { min-width: 0; flex: 1; }
+.store-help-link h2 { margin: 0; font-size: 15px; font-weight: 500; line-height: 1.65; overflow-wrap: anywhere; }
+.store-help-link p { margin: 4px 0 0; color: var(--ls-muted); font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.store-help-link > svg { width: 17px; height: 17px; flex: 0 0 17px; color: var(--ls-muted); }
+.store-help-empty { margin: 0; padding: 40px 24px; border-top: 1px solid var(--ls-line); color: var(--ls-muted); text-align: center; font-size: 14px; }
+.store-help-article .store-help-heading { padding-bottom: 24px; }
+.store-help-summary { margin: 13px 0 0; color: var(--ls-muted); font-size: 14px; line-height: 1.8; overflow-wrap: anywhere; }
+.store-help-body { margin: 0 30px; padding: 24px 0 28px; border-top: 1px solid var(--ls-line); color: var(--ls-ink); font-size: 15px; line-height: 1.85; }
+.store-help-body .acg-rich { max-width: 100%; min-width: 0; }
+.store-help-body .acg-rich > :first-child { margin-top: 0; }
+.store-help-body .acg-rich > :last-child { margin-bottom: 0; }
+.store-help-body .acg-rich :is(h1,h2,h3,h4,h5,h6) { font-weight: 600; line-height: 1.5; }
+.store-help-body img { display: block; max-width: 100%; height: auto; }
+.store-help-body pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+.store-help-body table { max-width: 100%; overflow-x: auto; }
+.store-help-body a { overflow-wrap: anywhere; }
+.store-help-article-footer { padding: 17px 30px; border-top: 1px solid var(--ls-line); }
+.store-help-article-footer a { display: inline-flex; align-items: center; gap: 8px; color: var(--ls-muted); font-size: 13px; line-height: 1.6; }
+.store-help-article-footer a:hover { color: var(--ls-ink); }
+@media (max-width: 600px) {
+    .localstar-body .store-help-page { padding-top: 22px; padding-bottom: 30px; }
+    .store-help-page .store-breadcrumb { margin-bottom: 12px; font-size: 11px; }
+    .store-help-heading { padding: 21px 20px 19px; }
+    .store-help-heading h1 { font-size: 22px; }
+    .store-help-link { padding: 16px 20px; gap: 14px; min-height: 60px; }
+    .store-help-link h2 { font-size: 14px; }
+    .store-help-link p { font-size: 12px; }
+    .store-help-article .store-help-heading { padding-bottom: 20px; }
+    .store-help-summary { font-size: 13px; }
+    .store-help-body { margin: 0 20px; padding: 20px 0 24px; font-size: 14px; }
+    .store-help-article-footer { padding: 16px 20px; }
+}
+@media (prefers-reduced-motion: reduce) { .store-help-link { transition: none; } }
+
+/* Compact public sitemap, separate from article typography. */
+.store-sitemap .store-help-heading { padding-bottom: 16px; }
+.store-sitemap-links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 32px; padding: 0 30px 24px; }
+.store-sitemap-group { min-width: 0; }
+.store-sitemap-group h2 { margin: 0 0 10px; color: var(--ls-ink); font-size: 15px; font-weight: 600; line-height: 1.5; }
+.store-sitemap-group ul { margin: 0; padding: 0; list-style: none; }
+.store-sitemap-group li { margin: 0; padding: 0; list-style: none; }
+.store-sitemap-group a { display: block; padding: 5px 0; font-size: 13px; line-height: 1.6; color: var(--ls-muted); overflow-wrap: anywhere; }
+.store-sitemap-group a:hover, .store-sitemap-xml a:hover { color: var(--ls-ink); text-decoration: underline; }
+.store-sitemap-group a:focus-visible, .store-sitemap-xml a:focus-visible { outline: 2px solid var(--ls-ink); outline-offset: 3px; border-radius: 2px; }
+.store-sitemap-xml { margin: 0; padding: 16px 30px; border-top: 1px solid var(--ls-line); font-size: 13px; line-height: 1.6; color: var(--ls-muted); }
+@media (max-width: 600px) {
+    .store-sitemap-links { grid-template-columns: minmax(0, 1fr); gap: 22px; padding: 0 20px 22px; }
+    .store-sitemap-xml { padding: 15px 20px; }
+}

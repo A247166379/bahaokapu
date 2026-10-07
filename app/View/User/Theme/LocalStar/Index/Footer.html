@@ -1,0 +1,91 @@
+    </div>
+    <footer class="ls-footer store-footer">
+        <div class="ls-shell store-footer__inner">
+            <div class="store-footer-brand">
+                <a class="store-footer-logo" href="#{store_url('/')}" aria-label="#{$config.shop_name|escape:'html'}" title="#{$config.shop_name|escape:'html'}" data-store-edit="config" data-store-field="logo"><img src="#{store_logo_url($config.logo)|escape:'html'}" width="24" height="24" alt=""></a>
+            </div>
+            <div class="store-footer-bottom"><span data-store-edit="config" data-store-field="shop_name">© #{$smarty.now|date_format:"%Y"} #{$config.shop_name}</span>#{if $footerIcp}<span data-store-edit="config" data-store-field="icp">#{$footerIcp}</span>#{/if}<a class="store-geolocation-credit" href="https://db-ip.com" target="_blank" rel="noopener">IP Geolocation by DB-IP</a><a class="store-fx-credit" data-display-currency-credit href="https://www.exchangerate-api.com" target="_blank" rel="noopener" hidden>Rates By Exchange Rate API</a></div>
+            <nav class="store-footer-links" aria-label="#{t('页脚导航')}" data-store-edit="fixedlinks">
+                <a href="#{store_url('/help')}">#{t("帮助中心")}</a>
+                <a href="#{$publicContactUrl}">#{t("联系我们")}</a>
+                <a href="#{store_url('/sitemap')}">#{store_sitemap_label()}</a>
+            </nav>
+        </div>
+    </footer>
+</div>
+
+#{if $storeAccount}
+#{js([
+"/assets/common/js/util/dict.js",
+"/assets/common/js/jquery.min.js",
+"/assets/common/js/toastr.min.js",
+"/assets/common/js/component/loading.js",
+"/assets/common/js/util.js",
+"/assets/common/js/layer/layer.js",
+"/assets/common/js/format.js",
+"/assets/common/js/message.js",
+"/assets/common/js/component.js",
+"/assets/common/js/layui/layui.js",
+"/assets/common/js/bootstrap/bootstrap.bundle.min.js",
+"/assets/common/js/table/bootstrap-table.min.js",
+"/assets/common/js/component/form.js",
+"/assets/common/js/component/search.js",
+"/assets/common/js/component/xm-select.js",
+"/assets/common/js/component/table.js",
+"/assets/common/js/component/select2.min.js",
+"/assets/common/js/cache.js",
+"/assets/common/js/component/decimal.js",
+"/app/View/User/Theme/LocalStar/Assets/AccountDict.js?rev=buyer-20261002-r1",
+"/app/View/User/Theme/LocalStar/Assets/Account.js?rev=vietnamese-20261004-r1"
+])}
+#{else}
+#{js(
+[
+"/assets/common/js/_.js",
+"/assets/user/js/_index.js"
+],
+[
+"/assets/common/js/util/dict.js",
+"/assets/common/js/jquery.min.js",
+"/assets/common/js/toastr.min.js",
+"/assets/common/js/component/loading.js",
+"/assets/common/js/util.js",
+"/assets/common/js/layer/layer.js",
+"/assets/common/js/jquery.pjax.min.js",
+"/assets/common/js/jquery.qrcode.min.js",
+"/assets/common/js/format.js",
+"/assets/common/js/message.js",
+"/assets/common/js/component.js",
+"/assets/common/js/layui/layui.js",
+"/assets/common/js/jquery.treegrid.min.js",
+"/assets/common/js/bootstrap/bootstrap.bundle.min.js",
+"/assets/common/js/table/bootstrap-table.min.js",
+"/assets/common/js/table/bootstrap-table-treegrid.min.js",
+"/assets/common/js/component/form.js",
+"/assets/common/js/component/search.js",
+"/assets/common/js/component/xm-select.js",
+"/assets/common/js/component/tree.select.js",
+"/assets/common/js/component/authtree.js",
+"/assets/common/js/component/table.js",
+"/assets/common/js/component/select2.min.js",
+"/assets/common/js/cache.js",
+"/assets/common/js/editor/editor.js",
+"/assets/common/js/editor/code/code.js",
+"/assets/common/js/component/decimal.js",
+"/assets/user/js/trade.js",
+"/assets/user/js/treasure.js"
+])}
+#{/if}
+#{if !$storeAccount}#{js("/assets/user/js/fulfillment.js?rev=redeem-20260923")}#{/if}
+#{js("/app/View/User/Theme/LocalStar/Assets/Theme.js?rev=vietnamese-20261004-r1")}
+#{js("/app/View/User/Theme/LocalStar/Assets/RichAppearance.js?rev=appearance-display-20261003-r1")}
+<!--start::HOOK-->
+#{hook(\App\Consts\Hook::USER_GLOBAL_VIEW_BODY)}
+#{if $storeAccount}#{hook(\App\Consts\Hook::USER_VIEW_BODY)}#{else}#{hook(\App\Consts\Hook::USER_VIEW_INDEX_BODY)}#{/if}
+<!--end::HOOK-->
+</body>
+<!--start::HOOK-->
+#{hook(\App\Consts\Hook::USER_GLOBAL_VIEW_FOOTER)}
+#{if $storeAccount}#{hook(\App\Consts\Hook::USER_VIEW_FOOTER)}#{else}#{hook(\App\Consts\Hook::USER_VIEW_INDEX_FOOTER)}#{/if}
+<!--end::HOOK-->
+</html>

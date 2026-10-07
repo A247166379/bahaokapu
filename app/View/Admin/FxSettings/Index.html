@@ -1,0 +1,23 @@
+#{include file="../Header.html"}
+<style>
+#fx-settings-admin{width:100%;max-width:1040px;margin:auto;min-width:0}.fx-card{background:var(--md-surface,#fff);color:var(--md-on-surface,#20252c);border:1px solid var(--md-divider,#e7eaf0);border-radius:16px;padding:24px;margin-bottom:16px}.fx-card h2{font-size:22px;margin:0 0 12px}.fx-card p,.fx-card small{color:var(--md-on-surface-med,#69717e);line-height:1.7}.fx-card small{display:block;margin-top:6px}.fx-switch{display:flex;align-items:center;gap:10px;margin-bottom:18px}.fx-state{padding:12px;background:var(--md-surface-2,#f5f7fa);border-radius:8px;font-size:14px;line-height:1.7;overflow-wrap:anywhere}.fx-dates{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:18px 0 0}.fx-dates div{min-width:0}.fx-dates dt{font-size:13px;color:var(--md-on-surface-med,#69717e);font-weight:400}.fx-dates dd{font-size:14px;margin:5px 0 0;overflow-wrap:anywhere}.fx-currencies{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:20px 0}.fx-currency{padding:16px;border:1px solid var(--md-divider,#e7eaf0);border-radius:12px;min-width:0}.fx-currency label{display:block;font-weight:600}.fx-currency .fx-input{display:flex;align-items:center;gap:8px;margin-top:8px}.fx-currency input{min-width:0;width:100%}.fx-actions{display:flex;flex-wrap:wrap;gap:10px}.fx-message{margin-top:12px;overflow-wrap:anywhere}.fx-warning{color:var(--md-error,#b42318)!important}.fx-attribution{margin:12px 0 0!important;font-size:13px}@media(max-width:660px){.fx-card{padding:18px}.fx-currencies,.fx-dates{grid-template-columns:1fr}.fx-actions button{flex:1;min-height:44px}.fx-card h2{font-size:20px}}
+</style>
+<div class="content d-flex flex-column flex-column-fluid" id="kt_content">#{include file="../Toolbar.html"}
+<div class="post d-flex flex-column-fluid" id="kt_post"><div class="container-fluid" id="fx-settings-admin" data-admin-mobile-action-placement="inline">
+<section class="fx-card"><h2>汇率设置</h2><p>以人民币商品价换算外币参考价。顾客可以独立选择显示币种；外币价格会标注参考，并保留人民币基准价。</p>
+<div id="fx-state" class="fx-state" role="status">正在读取汇率状态…</div>
+<dl class="fx-dates"><div><dt>服务数据更新</dt><dd id="fx-last-update">—</dd></div><div><dt>下次服务更新</dt><dd id="fx-next-update">—</dd></div><div><dt>网站最近成功抓取</dt><dd id="fx-fetched-at">—</dd></div></dl>
+<p id="fx-error" class="fx-warning" hidden></p>
+<p class="fx-attribution">参考数据来自 <a href="https://www.exchangerate-api.com" target="_blank" rel="noopener noreferrer">ExchangeRate-API</a>，每日更新。</p>
+</section>
+<form id="fx-form" class="fx-card">
+<label class="fx-switch"><input id="fx-enabled" type="checkbox"><span>启用外币参考价格显示</span></label>
+<p>显示调整只影响网站展示。0% 使用服务参考汇率，正数提高外币显示价，负数降低外币显示价；允许 -20% 至 50%。</p>
+<div id="fx-currencies" class="fx-currencies"></div>
+<p>人民币基准固定为 1，调整为 0%。商品原价、订单金额与支付计价配置保持各自既有设置。</p>
+<p>服务器每小时自动检查汇率；数据源每日更新。首次使用可点击“立即更新汇率”。更新失败会保留上次有效数据；服务数据超过 72 小时，网站会回到人民币显示。</p>
+<div class="fx-actions"><button id="fx-save" class="btn btn-primary" type="submit">保存显示设置</button><button id="fx-refresh" class="btn btn-light" type="button">立即更新汇率</button><button id="fx-reload" class="btn btn-light" type="button">刷新状态</button></div>
+<div id="fx-message" class="fx-message" role="status" aria-live="polite"></div>
+</form></div></div></div>
+#{ready("/assets/admin/controller/config/fx-settings.js?v=20261004-r2")}
+#{include file="../Footer.html"}

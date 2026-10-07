@@ -1,0 +1,18 @@
+/* Contact buttons share solid fills and equal sizing in every storefront theme. */
+.localstar-body .store-footer__inner { flex-wrap: wrap; }
+.store-social-links { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; }
+.store-footer-social { flex: 0 1 auto; }
+.localstar-body .store-social-links .store-social-button { display: grid; place-items: center; position: relative; flex: 0 0 34px; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 50%; background: #536a7c; color: #fff; opacity: 1; transition: filter .15s ease; }
+.localstar-body .store-social-links .store-social--wechat { background: #168545; }
+.localstar-body .store-social-links .store-social--qq { background: #1d69cc; }
+.localstar-body .store-social-links .store-social--telegram { background: #137fb3; }
+.localstar-body .store-social-links .store-social--email,
+.localstar-body .store-social-links .store-social-button[href^="mailto:" i] { background: #b85d2c; }
+.localstar-body .store-social-links .store-social-button:hover { filter: brightness(.94); }
+.localstar-body .store-social-links .store-social-button > svg { display: block; width: 17px; height: 17px; }
+.store-social-links .store-contact-preview { z-index: 1002; }
+.store-announcement .store-announcement-image { display: block; width: auto; max-width: 100%; height: auto; max-height: 220px; object-fit: contain; margin: 0 0 12px; }
+@media (max-width: 1023px) {
+    .store-footer-social { margin-top: 16px; }
+}
+@media (prefers-reduced-motion: reduce) { .store-social-button { transition: none !important; } }

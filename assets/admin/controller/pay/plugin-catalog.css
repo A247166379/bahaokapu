@@ -1,0 +1,73 @@
+.pay-plugin-catalog {
+    display: grid;
+    gap: 12px;
+}
+
+.pay-plugin-catalog__item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 20px;
+    border: 1px solid var(--md-divider, #e9edf3);
+    border-radius: 12px;
+    background: var(--md-surface, #fff);
+}
+
+.pay-plugin-catalog__icon {
+    flex: 0 0 38px;
+    width: 38px;
+    height: 38px;
+    object-fit: contain;
+    border-radius: 10px;
+}
+
+.pay-plugin-catalog__text {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.pay-plugin-catalog__name {
+    margin: 0;
+    color: var(--md-on-surface, #262b33);
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.pay-plugin-catalog__methods {
+    margin: 5px 0 0;
+    color: var(--md-on-surface-med, #788292);
+    font-size: 13px;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+
+.pay-plugin-catalog__configure {
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+
+.pay-plugin-catalog__empty {
+    padding: 32px 16px;
+    text-align: center;
+    color: var(--md-on-surface-med, #788292);
+}
+
+@media (max-width: 575.98px) {
+    .pay-plugin-catalog__item {
+        gap: 10px;
+        padding: 14px 12px;
+    }
+
+    .pay-plugin-catalog__icon {
+        flex-basis: 32px;
+        width: 32px;
+        height: 32px;
+    }
+
+    .pay-plugin-catalog__configure {
+        padding: 8px 10px !important;
+        font-size: 12px;
+    }
+}

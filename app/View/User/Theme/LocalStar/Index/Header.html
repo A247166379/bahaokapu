@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="#{$storeLocale|escape:'html'}" translate="no"#{if $storeAccount} data-theme="light"#{/if}>
+<head>
+    <meta charset="UTF-8">
+    <meta name="google" content="notranslate">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="keywords" content="#{if $seoKeywords}#{$seoKeywords}#{else}#{$config.keywords}#{/if}"/>
+    <meta name="description" content="#{if $seoDescription}#{$seoDescription}#{else}#{$config.description}#{/if}"/>
+    #{if $robots}<meta name="robots" content="#{$robots|escape:'html'}"/>#{/if}
+    #{if $canonical}<link rel="canonical" href="#{$canonical|escape:'html'}"/>#{/if}
+    #{foreach $storeAlternates as $alternate}<link rel="alternate" hreflang="#{$alternate.code}" href="#{$alternate.url|escape:'html'}"/>#{if $alternate.code == 'zh-cn'}<link rel="alternate" hreflang="x-default" href="#{$alternate.url|escape:'html'}"/>#{/if}#{/foreach}
+    <link href="#{store_logo_url()|escape:'html'}" rel="icon">
+    <title>#{if $homepageSeo}#{$seoExactTitle}#{elseif $isCategoryPage}#{$categoryPageTitle} - #{$config.shop_name}#{else}#{$title} - #{$config.shop_name}#{/if}</title>
+    <meta property="og:locale" content="#{$storeOgLocale}"/>
+    <meta property="og:type" content="#{if $ogType}#{$ogType|escape:'html'}#{else}website#{/if}"/>
+    <meta property="og:site_name" content="#{$config.shop_name}"/>
+    <meta property="og:title" content="#{if $homepageSeo}#{$seoExactTitle}#{elseif $isCategoryPage}#{$categoryPageTitle} - #{$config.shop_name}#{else}#{$title} - #{$config.shop_name}#{/if}"/>
+    <meta property="og:description" content="#{if $seoDescription}#{$seoDescription}#{else}#{$config.description}#{/if}"/>
+    #{if $canonical}<meta property="og:url" content="#{$canonical|escape:'html'}"/>#{/if}
+    #{if $ogImage}<meta property="og:image" content="#{$ogImage|escape:'html'}"/>#{/if}
+    #{if $storeAccount}
+    #{css(
+    [
+    "/assets/common/css/_.css",
+    "/assets/common/css/_material.css",
+    "/assets/common/fonts/material-icons.css",
+    "/app/View/User/Theme/LocalStar/Assets/Style.css?rev=product-icon-20261005-r1",
+    "/app/View/User/Theme/LocalStar/Assets/Account.css?rev=buyer-20261002-r1"
+    ],
+    [
+    "/assets/common/css/font.min.css",
+    "/assets/common/js/layui/css/layui.css",
+    "/assets/common/css/select2.min.css",
+    "/assets/common/css/toastr.min.css",
+    "/assets/common/js/table/bootstrap-table.css",
+    "/assets/common/js/layer/theme/default/layer.css",
+    "/assets/common/css/component.css",
+    "/assets/common/css/md-tokens.css",
+    "/assets/common/css/md-components.css",
+    "/assets/common/fonts/material-icons.css",
+    "/app/View/User/Theme/LocalStar/Assets/Style.css?rev=product-icon-20261005-r1",
+    "/app/View/User/Theme/LocalStar/Assets/Account.css?rev=buyer-20261002-r1"
+    ])}
+
+    #{else}
+    #{css(
+    [
+    "/assets/common/css/bootstrap.min.css",
+    "/assets/common/css/_.css",
+    "/assets/user/css/index.css",
+    "/app/View/User/Theme/LocalStar/Assets/Style.css?rev=product-icon-20261005-r1"
+    ],
+    [
+    "/assets/common/css/font.min.css",
+    "/assets/common/js/layui/css/layui.css",
+    "/assets/common/css/select2.min.css",
+    "/assets/common/css/component.css",
+    "/assets/common/js/table/bootstrap-table.css",
+    "/assets/common/js/layer/theme/default/layer.css",
+    "/assets/common/css/bootstrap.min.css",
+    "/assets/common/css/toastr.min.css",
+    "/assets/user/css/index.css",
+    "/app/View/User/Theme/LocalStar/Assets/Style.css?rev=product-icon-20261005-r1"
+    ])}
+    #{/if}
+    <link rel="stylesheet" href="/app/View/User/Theme/LocalStar/Assets/Social.css?rev=home-contact-20261005-r2">
+    #{js("/assets/common/js/ready.js")}
+    #{index_var()}
+    <script src="/app/View/User/Theme/LocalStar/Assets/PriceDisplay.js?rev=home-banner-20261005-r1"></script>
+    #{ready("/app/View/User/Theme/LocalStar/Assets/BannerOverlay.js?rev=banner-content-20261005-r3")}
+    <!--start::HOOK-->
+    #{hook(\App\Consts\Hook::USER_GLOBAL_VIEW_HEADER)}
+    #{if $storeAccount}#{hook(\App\Consts\Hook::USER_VIEW_HEADER)}#{else}#{hook(\App\Consts\Hook::USER_VIEW_INDEX_HEADER)}#{/if}
+    <!--end::HOOK-->
+</head>
+<body class="localstar-body#{if $storeAccount} store-account-body uc-body#{/if}" data-store-locale="#{$storeLocale}" data-store-prefix="#{$storePrefix}" data-store-default-appearance="#{if $config.store_default_appearance == 'light'}light#{elseif $config.store_default_appearance == 'gray'}gray#{elseif $config.store_default_appearance == 'dark'}dark#{else}system#{/if}">
+<a class="store-skip-link" href="#store-main">#{t("跳转到内容")}</a>
+<div class="ls-page store-page">
+    <header class="ls-header store-header">
+        <div class="ls-shell ls-header__inner">
+            <a class="ls-brand" href="#{store_url('/')}" aria-label="#{$config.shop_name|escape:'html'}" title="#{$config.shop_name|escape:'html'}" data-store-edit="config" data-store-field="shop_name">
+                <span class="ls-brand__mark" data-store-edit="config" data-store-field="logo"><img src="#{store_logo_url($config.logo)|escape:'html'}" alt=""></span>
+                <span class="ls-brand__text store-sr-only">#{$config.shop_name|escape:'html'}</span>
+            </a>
+            <div class="store-header-tools">
+                <label class="store-currency-control" data-display-currency-control hidden><select data-display-currency-select></select><span data-display-currency-value aria-hidden="true"></span></label>
+                <button class="store-theme-toggle" type="button" data-appearance="system" aria-label="#{t('切换外观')}" title="#{t('跟随系统')}"><span data-theme-icon aria-hidden="true">
+                    <svg data-appearance="system" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8m-4-4v4"/></svg>
+                    <svg data-appearance="light" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg>
+                    <svg data-appearance="gray" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18Z" fill="currentColor"/></svg>
+                    <svg data-appearance="dark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20.7 13.1A9 9 0 0 1 10.9 3.3a9 9 0 1 0 9.8 9.8Z"/></svg>
+                </span></button>
+                <details class="store-language">
+                    <summary aria-label="#{t('语言')}"><svg class="store-language-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h12M9 2v3m-4 3 6 6M12 5c-1 5-4 8-8 10m9 6 4-9 4 9m-6.7-3h5.4"/></svg><span>#{foreach $storeLocales as $l}#{if $l.active}#{if $l.code == 'zh-cn' || $l.code == 'zh-CN'}简体#{elseif $l.code == 'zh-tw' || $l.code == 'zh-TW'}繁體#{elseif $l.code == 'en'}English#{elseif $l.code == 'ru'}Русский#{elseif $l.code == 'vi'}Tiếng Việt#{else}#{$l.name}#{/if}#{/if}#{/foreach}</span><svg class="store-language-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="m3 4.5 3 3 3-3"/></svg></summary>
+                    <ul>
+                        #{foreach $storeLocales as $l}
+                        <li><a href="#{$l.url}" class="#{if $l.active}active#{/if}" lang="#{$l.code}" hreflang="#{$l.code}" #{if $l.active}aria-current="true"#{/if}>#{$l.name}</a></li>
+                        #{/foreach}
+                    </ul>
+                </details>
+                <button class="ls-menu-toggle" type="button" aria-expanded="false" aria-controls="ls-navigation" aria-label="#{t('菜单')}"><svg data-menu-icon="open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M3 5h18M3 12h18M3 19h18"/></svg><svg data-menu-icon="close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button>
+            </div>
+            <div class="ls-navigation" id="ls-navigation">
+                <nav class="ls-nav" aria-label="#{t('主导航')}" data-store-edit="navigation">
+                    #{if $storeBundle.navigation}
+                    #{foreach $storeBundle.navigation as $nav}
+                        #{if $nav.url}<a class="ls-nav__link" href="#{store_public_url($nav.url,$publicContactUrl)}" data-localize-link data-store-edit="navigation" data-content-id="#{$nav.id}">#{if $nav.slug == 'home'}#{t('首页')}#{elseif $nav.slug == 'order'}#{t('订单查询')}#{elseif $nav.slug == 'help'}#{t('帮助中心')}#{elseif $nav.slug == 'contact'}#{t('联系我们')}#{else}#{$nav.title}#{/if}</a>#{/if}
+                    #{/foreach}
+                    #{else}
+                    <a class="ls-nav__link" href="#{store_url('/')}">#{t("首页")}</a>
+                    <a class="ls-nav__link" href="#{store_url('/order')}">#{t("订单查询")}</a>
+                    <a class="ls-nav__link" href="#{store_url('/help')}">#{t("帮助中心")}</a>
+                    <a class="ls-nav__link" href="#{$publicContactUrl}">#{t("联系我们")}</a>
+                    #{/if}
+                </nav>
+                <div class="store-account-links">
+                    #{if $user}<a href="#{store_url('/user/dashboard/index')}">#{t("个人中心")}</a><a href="#{store_url('/user/personal/purchaseRecord')}">#{t("我的订单")}</a>
+                    #{else}<a href="#{store_url('/user/authentication/login')}">#{t("登录")}</a><a href="#{store_url('/user/authentication/register')}">#{t("创建账号")}</a>#{/if}
+                </div>
+            </div>
+        </div>
+    </header>
+    <div id="pjax-container">

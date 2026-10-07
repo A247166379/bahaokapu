@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="#{lang_code()}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="keywords" content="#{$config.keywords}"/>
+    <meta name="description" content="#{$config.description}"/>
+    <meta name="robots" content="noindex,nofollow"/>
+    <link href="/favicon.ico" rel="icon">
+    <title>#{$title} - #{$config.shop_name}</title>
+    #{css(
+    [
+    "/assets/common/css/bootstrap.min.css",
+    "/assets/common/css/_.css",
+    "/assets/user/css/_auth.css",
+    "/app/View/User/Theme/LocalStar/Assets/Style.css?rev=layout-20261002-r4"
+    ],
+    [
+    "/assets/common/css/font.min.css",
+    "/assets/common/js/layui/css/layui.css",
+    "/assets/common/css/select2.min.css",
+    "/assets/common/css/component.css",
+    "/assets/common/js/table/bootstrap-table.css",
+    "/assets/common/js/layer/theme/default/layer.css",
+    "/assets/common/css/bootstrap.min.css",
+    "/assets/common/css/toastr.min.css",
+    "/assets/user/css/auth.css",
+    "/app/View/User/Theme/LocalStar/Assets/Style.css?rev=layout-20261002-r4"
+    ])}
+    <link rel="stylesheet" href="/app/View/User/Theme/LocalStar/Assets/Authentication.css?rev=four-locale-20261002">
+    #{js("/assets/common/js/ready.js")}
+    #{index_var()}
+    <!--start::HOOK-->
+    #{hook(\App\Consts\Hook::USER_GLOBAL_VIEW_HEADER)}
+    <!--end::HOOK-->
+</head>
+<body class="localstar-body ls-auth-body">
+<div class="ls-auth-shell">
+    <div class="ls-auth-top"><a class="ls-auth-back" href="#{store_url('/')}"><i class="fa-duotone fa-regular fa-arrow-left"></i> #{t("返回商城")}</a><nav class="ls-auth-languages" aria-label="#{t('语言')}">#{foreach $storeLocales as $l}<a href="#{$l.url}" lang="#{$l.code}" #{if $l.active}aria-current="true"#{/if}>#{if $l.code == 'zh-cn' || $l.code == 'zh-CN'}简体#{elseif $l.code == 'zh-tw' || $l.code == 'zh-TW'}繁體#{elseif $l.code == 'en'}English#{elseif $l.code == 'ru'}Русский#{elseif $l.code == 'vi'}Tiếng Việt#{else}#{$l.name}#{/if}</a>#{/foreach}</nav></div>
+    <div class="ls-auth-decoration" aria-hidden="true"><span></span><span></span><span></span></div>
+    <section class="ls-auth-brand">
+        <a class="ls-brand" href="#{store_url('/')}">
+            <span class="ls-brand__mark"><img src="/favicon.ico" alt="#{$config.shop_name|escape:'html'}"></span>
+            <span class="ls-brand__text"><strong>#{$config.shop_name}</strong></span>
+        </a>
+        <div>
+            <h1>#{t("一个账号，管理每一笔订单")}</h1>
+            <p>#{t("登录后可查看购买记录、账户余额和店铺消息，手机与电脑均可使用。")}</p>
+        </div>
+        <ul>
+            <li><i class="fa-duotone fa-regular fa-circle-check"></i> #{t("订单集中管理")}</li>
+            <li><i class="fa-duotone fa-regular fa-circle-check"></i> #{t("交付信息随时查看")}</li>
+            <li><i class="fa-duotone fa-regular fa-circle-check"></i> #{t("响应式手机体验")}</li>
+        </ul>
+    </section>
+    <section class="ls-auth-panel">

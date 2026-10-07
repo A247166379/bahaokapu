@@ -1,0 +1,40 @@
+#{include file="./Header.html"}
+<div class="ls-auth-card">
+    <div class="ls-auth-card__head">
+        <span class="ls-auth-card__icon"><i class="fa-duotone fa-regular fa-right-to-bracket"></i></span>
+        <div><h2>#{t("欢迎回来")}</h2><p>#{t("使用您的账号继续")}</p></div>
+    </div>
+
+    <form method="post" class="needs-validation ls-auth-form">
+        <label class="ls-input-group">
+            <span>#{t("用户名/手机号/邮箱")}</span>
+            <div><i class="fa-duotone fa-regular fa-user"></i><input type="text" class="form-control" name="username" placeholder="#{t('请输入账号')}" autocomplete="username" required></div>
+        </label>
+        <label class="ls-input-group">
+            <span>#{t("密码")}</span>
+            <div><i class="fa-duotone fa-regular fa-lock"></i><input type="password" class="form-control" name="password" placeholder="#{t('请输入密码')}" autocomplete="current-password" minlength="6" required></div>
+        </label>
+
+        #{if $config.login_verification == 1}
+            <label class="ls-input-group">
+                <span>#{t("图形验证码")}</span>
+                <div class="ls-auth-captcha"><i class="fa-duotone fa-regular fa-shield"></i><input type="text" class="form-control" name="captcha" placeholder="#{t('请输入验证码')}" autocomplete="off" required><img src="/user/captcha/image?action=login&amp;lang=#{$storeLocale}" data-acg-refresh="/user/captcha/image?action=login&amp;lang=#{$storeLocale}" class="image-code" alt="#{t('更换验证码')}"></div>
+            </label>
+        #{/if}
+
+        <div class="ls-auth-options">
+            <label><input name="remember" type="checkbox" value="1"><span>#{t("保持会话")}</span></label>
+            <a href="#{if $config.forget_type == 0}#{store_url('/user/authentication/emailForget')}#{else}#{store_url('/user/authentication/phoneForget')}#{/if}">#{t("忘记密码？")}</a>
+        </div>
+        <button type="submit" class="ls-auth-submit">#{t("登录")}<i class="fa-duotone fa-regular fa-arrow-right"></i></button>
+    </form>
+
+    #{if getHookNum(\App\Consts\Hook::USER_VIEW_AUTH_LOGIN_BUTTON) > 0}<div class="ls-auth-divider"><span>OR</span></div>#{/if}
+    #{hook(\App\Consts\Hook::USER_VIEW_AUTH_LOGIN_BUTTON)}
+
+    #{if $config.registered_state == 1}
+        <p class="ls-auth-switch">#{t("还没有账号？")} <a href="#{store_url('/user/authentication/register')}">#{t("立即注册")}</a></p>
+    #{/if}
+</div>
+#{ready("/assets/user/controller/auth/login.js?rev=locale-consistency-20261004-r1")}
+#{include file="./Footer.html"}

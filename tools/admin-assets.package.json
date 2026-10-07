@@ -1,0 +1,14 @@
+{
+  "name": "storefront-admin-assets-build",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Development-only regeneration of the existing admin asset bundles",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "terser": "5.51.2",
+    "clean-css": "5.3.3",
+    "acorn": "8.18.0"
+  }
+}

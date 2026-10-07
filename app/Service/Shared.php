@@ -1,0 +1,173 @@
+<?php
+declare(strict_types=1);
+
+namespace App\Service;
+
+
+use App\Model\Commodity;
+use App\Model\PriceTemplate;
+use Kernel\Annotation\Bind;
+
+#[Bind(class: \App\Service\Bind\Shared::class)]
+interface Shared
+{
+
+    /**
+     * 连接店铺
+     * @param string $domain
+     * @param string $appId
+     * @param string $appKey
+     * @param int $type
+     * @return array|null
+     */
+    public function connect(string $domain, string $appId, string $appKey, int $type = 0): ?array;
+
+
+    /**
+     * 获取店铺项目
+     * @param \App\Model\Shared $shared
+     * @return array|null
+     */
+    public function items(\App\Model\Shared $shared): ?array;
+
+    /**
+     * @param \App\Model\Shared $shared
+     * @param string $code
+     * @return array
+     */
+    public function item(\App\Model\Shared $shared, string $code): array;
+
+
+    /**
+     * @param \App\Model\Shared $shared
+     * @param Commodity $commodity
+     * @param int $cardId
+     * @param int $num
+     * @param string $race
+     * @return bool
+     */
+    public function inventoryState(\App\Model\Shared $shared, Commodity $commodity, int $cardId, int $num, string $race): bool;
+
+    /**
+     * @param \App\Model\Shared $shared
+     * @param Commodity $commodity
+     * @param string $race
+     * @return array
+     */
+    public function inventory(\App\Model\Shared $shared, Commodity $commodity, string $race = ""): array;
+
+
+    /**
+     * 远程购买卡密
+     * @param \App\Model\Shared $shared
+     * @param Commodity $commodity
+     * @param string $contact
+     * @param int $num
+     * @param int $cardId
+     * @param int $device
+     * @param string $password
+     * @param string $race
+     * @param array|null $sku
+     * @param string|null $widget
+     * @param string $requestNo
+     * @return string
+     */
+    public function trade(\App\Model\Shared $shared, Commodity $commodity, string $contact, int $num, int $cardId, int $device, string $password, string $race, ?array $sku, ?string $widget, string $requestNo): string;
+
+    /**
+     * @param \App\Model\Shared $shared
+     * @param string $code
+     * @param array $map
+     * @return array
+     */
+    public function draftCard(\App\Model\Shared $shared, string $code, array $map = []): array;
+
+    /**
+     * @param \App\Model\Shared $shared
+     * @param string $code
+     * @param int $cardId
+     * @return array
+     */
+    public function getDraft(\App\Model\Shared $shared, string $code, int $cardId): array;
+
+
+    /**
+     * @param Commodity $commodity
+     * @param \App\Model\Shared $shared
+     * @param string $code
+     * @param string|null $race
+     * @param null|array $sku
+     * @return string
+     */
+    public function getItemStock(Commodity $commodity, \App\Model\Shared $shared, string $code, ?string $race = null, ?array $sku = []): string;
+
+
+    /**
+     * @param Commodity $commodity
+     * @param \App\Model\Shared $shared
+     * @param string $code
+     * @param int $num
+     * @param string|null $race
+     * @param array|null $sku
+     * @param int|null $cardId
+     * @return string|float|int
+     */
+    public function getValuation(Commodity $commodity, \App\Model\Shared $shared, string $code, int $num, ?string $race = null, ?array $sku = [], ?int $cardId = 0): string|float|int;
+
+    /**
+     * @param string $config
+     * @param string $price
+     * @param string $userPrice
+     * @param int $type
+     * @param float $premium
+     * @return array
+     */
+    public function AdjustmentPrice(string $config, string $price, string $userPrice, int $type, float $premium): array;
+
+
+    /**
+     * 按加价模板计算接入商品的整套价格，返回结构与 AdjustmentPrice 一致并多出 level_price
+     *
+     * @param PriceTemplate $template
+     * @param string $config
+     * @param string $price
+     * @param string $userPrice
+     * @param string $levelPrice
+     * @return array
+     */
+    public function AdjustmentTemplate(PriceTemplate $template, string $config, string $price, string $userPrice, string $levelPrice = ''): array;
+
+
+    /**
+     * @param int $type
+     * @param float $premium
+     * @param string|int|float $amount
+     * @return string
+     */
+    public function AdjustmentAmount(int $type, float $premium, string|int|float $amount): string;
+
+    /**
+     * 按商品自身的加价设置（固定/百分比/模板）折算一个附加金额，比如预选加价。
+     * 直接调 AdjustmentAmount 的地方要换成它 —— 那个方法不认模板，
+     * type=2 会掉进百分比分支并乘上为 0 的 premium，加价被静默抹平。
+     *
+     * @param \App\Model\Commodity|int $commodity
+     */
+    public function AdjustmentExtra(\App\Model\Commodity|int $commodity, string|int|float $amount): string;
+
+
+    /**
+     * @param Commodity|int $commodity
+     * @return bool
+     */
+    public function syncRemoteItem(Commodity|int $commodity): bool;
+
+    /**
+     * 非种类商品在上游的拿货成本（已按汇率换算）。算不出来返回 null，调用方保持原值。
+     * @param \App\Model\Shared $shared
+     * @param Commodity $commodity 需带 shared_code
+     * @param array $remoteItem item() 的返回
+     * @return string|null
+     */
+    public function remoteCost(\App\Model\Shared $shared, Commodity $commodity, array $remoteItem): ?string;
+}

@@ -1,0 +1,28 @@
+<?php
+declare(strict_types=1);
+
+namespace App\Controller\Base;
+
+
+use App\Model\UserGroup;
+use App\Util\Context;
+
+abstract class User
+{
+    /**
+     * 获取会员对象数据
+     * @return \App\Model\User|null
+     */
+    protected function getUser(): ?\App\Model\User
+    {
+        return Context::get(\App\Consts\User::SESSION);
+    }
+
+    /**
+     * @return UserGroup|null
+     */
+    protected function getUserGroup(): ?UserGroup
+    {
+        return null;
+    }
+}

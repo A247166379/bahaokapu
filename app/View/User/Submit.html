@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="#{$displayLocale|escape:'html'}">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <meta name="robots" content="noindex,nofollow">
+    <title>#{t("正在跳转支付，请稍候")}</title>
+    <style>body{font:15px/1.6 system-ui,sans-serif;margin:40px 24px;color:#272a31;background:#f7f8fa;overflow-wrap:anywhere}main{max-width:440px;margin:12vh auto;padding:28px;background:#fff;border:1px solid #e6e8ec;border-radius:12px}button{width:100%;margin-top:16px;border:0;border-radius:8px;padding:12px 16px;background:#272a31;color:#fff;font:inherit;white-space:normal;overflow-wrap:anywhere}</style>
+</head>
+<body>
+<main><p role="status">#{t("正在跳转支付，请稍候")}</p>
+<form action="#{$url|escape:'html'}" method="post" id="request">
+    #{foreach $data as $key=>$val}
+    <input type="hidden" name="#{$key|escape:'html'}" value="#{$val|escape:'html'}">
+    #{/foreach}
+    <noscript><button type="submit">#{t("继续支付")}</button></noscript>
+</form></main>
+<script>document.getElementById("request").submit();</script>
+</body>
+</html>

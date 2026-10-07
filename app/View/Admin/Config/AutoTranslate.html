@@ -1,0 +1,20 @@
+#{include file="../Header.html"}
+<style>
+#auto-translate-admin{width:100%;max-width:960px;margin:auto;min-width:0}.at-card{background:#fff;border:1px solid #e7eaf0;border-radius:16px;padding:24px;margin-bottom:16px}.at-card h2{font-size:22px;margin:0 0 12px}.at-card p{color:#69717e;line-height:1.7}.at-card label{display:block;margin-bottom:18px;font-size:14px}.at-card label>span{display:block;margin-bottom:7px}.at-card .at-check{display:flex;align-items:center;gap:10px}.at-check>span{margin:0!important}.at-card input:not([type=checkbox]){width:100%;min-width:0}.at-actions{display:flex;flex-wrap:wrap;gap:10px}.at-state{padding:12px;background:#f5f7fa;border-radius:8px;font-size:14px;overflow-wrap:anywhere}.at-message{margin-top:12px;overflow-wrap:anywhere}.at-card small{display:block;margin-top:6px;color:#69717e}@media(max-width:560px){.at-card{padding:18px}.at-actions button,.at-actions a{flex:1;min-height:44px}.at-card h2{font-size:20px}}
+</style>
+<div class="content d-flex flex-column flex-column-fluid" id="kt_content">#{include file="../Toolbar.html"}
+<div class="post d-flex flex-column-fluid" id="kt_post"><div class="container-fluid" id="auto-translate-admin" data-admin-mobile-action-placement="inline">
+<section class="at-card"><h2>自动翻译</h2><p>后台使用简体中文。开启后，中文商品、文章和首页内容更新时，自动生成繁体中文、英文、俄文和越南文。</p>
+<div id="at-state" class="at-state" role="status">正在读取设置…</div></section>
+<form id="at-form" class="at-card">
+<label class="at-check"><input id="at-enabled" type="checkbox"><span>启用自动翻译</span></label>
+<label><span>翻译接口地址</span><input id="at-base-url" class="form-control" type="url" maxlength="2000" placeholder="https://api.openai.com/v1"><small>例如：https://api.openai.com/v1。使用兼容服务时，填写该服务支持 Chat Completions 的 HTTPS 接口基础地址。</small></label>
+<label><span>模型名称</span><input id="at-model" class="form-control" maxlength="128" placeholder="填写接口提供的模型名称"></label>
+<label><span>API 密钥</span><input id="at-api-key" class="form-control" type="password" autocomplete="new-password" maxlength="4096" placeholder="尚未配置"><small>使用 OpenAI 接口时填写 OpenAI API 密钥；兼容接口填写对应服务提供的密钥。</small><small id="at-key-status">密钥仅用于服务器调用，不在页面显示。</small></label>
+<label class="at-check"><input id="at-clear-key" type="checkbox"><span>清除已保存的密钥</span></label>
+<p>每分钟检查更新。翻译中的内容会显示待处理状态，失败后自动重试；已有有效的人工译文会保留。</p>
+<div class="at-actions"><button id="at-save" class="btn btn-primary" type="submit">保存设置</button><button id="at-reload" class="btn btn-light" type="button">刷新状态</button><a class="btn btn-light" href="/admin/config/storefront">返回首页内容</a></div>
+<div id="at-message" class="at-message" role="status" aria-live="polite"></div>
+</form></div></div></div>
+#{ready("/assets/admin/controller/config/auto-translate.js?v=20261002-r1")}
+#{include file="../Footer.html"}

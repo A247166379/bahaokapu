@@ -1,0 +1,62 @@
+#{include file="./Header.html"}
+#{item_var($item)}
+<script src="/app/View/User/Theme/LocalStar/Assets/Commerce.js?v=vietnamese-20261004-r1"></script>
+<link rel="stylesheet" href="/app/View/User/Theme/LocalStar/Assets/Checkout.css?v=product-icon-20261005-r1">
+<main id="store-main" class="ls-main store-checkout" data-store-checkout>
+    <div class="store-checkout-layout">
+        <section class="store-product-description" aria-labelledby="store-product-detail-title">
+            <header class="store-detail-heading">
+                <a class="store-detail-back" href="#{store_url('/')}" aria-label="#{t('返回首页')}" title="#{t('返回首页')}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M19 12H5m7-7-7 7 7 7"/></svg></a>
+                <h2 class="store-detail-title" id="store-product-detail-title"><span>#{t("商品详情")}</span></h2>
+            </header>
+            <div class="store-description">#{$item.description}</div>
+        </section>
+        <aside class="store-checkout-sidebar">
+            <section class="store-purchase-panel" aria-labelledby="store-product-name">
+                <form class="store-purchase-form" id="store-purchase-form" novalidate>
+                    <div class="store-purchase-tools">
+                        <div class="store-item-badges"><span class="store-delivery-badge">#{if $item.delivery_way == 0}#{t("自动发货")}#{else}#{t("在线发货")}#{/if}</span>#{foreach $item.tags as $tag}<span class="acg-tag acg-tag--#{$tag.color}">#{$tag.text}</span>#{/foreach}<span class="store-sales-badge">#{if $item.sales_display_configured}#{t("展示销量")}#{else}#{t("销量")}#{/if} #{$item.sales}</span><span class="store-sales-growth"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 17 6-6 4 4 8-10M15 5h6v6"/></svg><span>#{t("近1小时售出")} <b>#{$item.recent_paid_sales}</b> #{t("件")}</span></span></div>
+                        <button type="button" class="shared-button store-copy-button" aria-label="#{t('复制链接')}" title="#{t('复制链接')}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M15 9V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h4"/></svg></button>
+                    </div>
+                    <div class="store-purchase-title"><span class="store-purchase-cover"><img src="#{if $item.cover}#{$item.cover|escape:'html'}#{else}/favicon.ico#{/if}" alt=""></span><h1 id="store-product-name">#{$item.name|escape:'html'}</h1></div>
+                    <div class="store-purchase-pricing">
+                        <div class="store-price-total abacus"><span class="price" aria-live="polite">—</span></div>
+                        <span class="item-stock">#{t("库存")} #{$item.stock}</span>
+                        <label class="store-inline-quantity"><span class="store-sr-only">#{t("购买数量")}</span><div class="store-quantity"><button type="button" class="change-num-sub" aria-label="#{t('减少数量')}">−</button><input name="num" type="number" inputmode="numeric" aria-label="#{t('购买数量')}" min="#{if $item.minimum > 0}#{$item.minimum}#{else}1#{/if}" #{if $item.maximum > 0}max="#{$item.maximum}"#{/if} step="1" value="#{if $item.minimum > 0}#{$item.minimum}#{else}1#{/if}" required><button type="button" class="change-num-add" aria-label="#{t('增加数量')}">＋</button></div></label>
+                    </div>
+                    <p class="store-price-note" data-display-currency-note hidden></p>
+                #{if $item.can_channel}
+                <fieldset class="store-choice"><legend>#{t("价格")}</legend><label><input type="radio" name="price_type" value="retail" checked> #{t("零售价")}</label><label><input type="radio" name="price_type" value="channel"> #{t("渠道价")}</label></fieldset>
+                #{else}<input type="hidden" name="price_type" value="retail">#{/if}
+                #{if !empty($item.config.category)}
+                <fieldset class="store-choice"><legend>#{t("商品规格")}</legend><div class="sku-list">
+                    #{foreach $item.config.category as $race => $price}<button class="switch-race sku #{if $price@first}is-primary#{/if}" type="button" data-sku="#{$race|escape:'html'}">#{lang($race)}</button>#{/foreach}
+                </div></fieldset>
+                #{/if}
+                #{if !empty($item.config.sku)}#{foreach $item.config.sku as $name => $sku}
+                <fieldset class="store-choice"><legend>#{lang($name)}</legend><div class="sku-list">
+                    #{foreach $sku as $key => $price}<button class="switch-sku sku #{if $price@first}is-primary#{/if}" type="button" data-sku="#{$name|escape:'html'}" data-value="#{$key|escape:'html'}">#{lang($key)}#{if $price > 0} +<span data-display-base-amount="#{$price|escape:'html'}">#{$config.currency_symbol}#{$price}</span>#{/if}</button>#{/foreach}
+                </div></fieldset>#{/foreach}#{/if}
+                #{if $item.draft_status == 1}<input type="hidden" name="card_id"><button class="optional-card store-secondary" type="button">#{t("选择卡密")}</button>#{/if}
+                <fieldset class="store-choice"><legend>#{t("支付方式")}</legend><div class="pay-list store-pay-list" aria-live="polite"></div></fieldset>
+                #{if !$user}<label class="store-field"><span>#{contact_type_msg($item.contact_type)} <em>*</em></span><input name="contact" type="#{if $item.contact_type == 2}email#{else}text#{/if}" autocomplete="#{if $item.contact_type == 2}email#{elseif $item.contact_type == 1}tel#{else}off#{/if}" required placeholder="#{contact_type_msg($item.contact_type)}"></label>#{/if}
+                #{if $item.password_status == 1}<label class="store-field"><span>#{t("查询密码")} <em>*</em></span><input type="password" name="password" minlength="6" autocomplete="new-password" required placeholder="#{t('至少6个字符')}"></label>#{/if}
+                #{if !empty($item.widget)}<div class="store-widgets">#{widget_render($item.widget)}</div>#{/if}
+                #{if $item.trade_captcha == 1}<label class="store-field"><span>#{t("验证码")} <em>*</em></span><div class="store-captcha"><input type="text" name="captcha" inputmode="numeric" required autocomplete="off"><button type="button" class="store-captcha-refresh" aria-label="#{t('更换验证码')}"><img class="captcha-img" src="/user/captcha/image?action=trade" alt="#{t('更换验证码')}"></button></div></label>#{/if}
+                    <div class="store-form-error" role="alert" hidden></div>
+                    <button type="submit" class="store-buy-button" disabled>#{t("立即购买")}</button>
+                </form>
+                <div class="store-purchase-links"><a href="#{store_url('/help')}">#{t("帮助中心")}</a><a href="#{$publicContactUrl}">#{t("联系我们")}</a></div>
+            </section>
+            #{if $storeBundle.tips}
+            <section class="store-checkout-tips store-tips" aria-labelledby="store-checkout-tips-title">
+                <header class="store-panel-heading"><span class="store-panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7 8h10M7 12h6M5 18l-3 3V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5Z"/><path d="M8 21h12a2 2 0 0 0 2-2V8"/></svg></span><h2 id="store-checkout-tips-title">#{t("温馨提示")}</h2></header>
+                #{foreach $storeBundle.tips as $entry}<div class="store-rich store-tip-body">#{$entry.body}</div>#{/foreach}
+            </section>
+            #{/if}
+        </aside>
+    </div>
+    <dialog class="store-draft-dialog"><div class="store-dialog-heading"><h2>#{t("选择卡密")}</h2><button type="button" class="store-draft-close" aria-label="#{t('关闭')}">×</button></div><input class="store-draft-search" type="search" placeholder="#{t('搜索')}"><div class="store-draft-list"></div><div class="store-dialog-buttons"><button class="store-draft-prev" type="button">#{t("上一页")}</button><button class="store-draft-next" type="button">#{t("下一页")}</button><button class="store-draft-random" type="button">#{t("随机发货")}</button></div></dialog>
+</main>
+#{ready("/app/View/User/Theme/LocalStar/Assets/Checkout.js?rev=payment-visible-20261004-r2")}
+#{include file="./Footer.html"}

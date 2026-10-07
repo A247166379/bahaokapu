@@ -1,0 +1,6 @@
+<nav class="uc-subtab" aria-label="#{t('安全中心')}">
+    <a href="#{store_url('/user/security/personal')}" #{if active('/user/security/personal')}class="active"#{/if}>#{t("个人资料")}</a>
+    <a href="#{store_url('/user/security/password')}" #{if active('/user/security/password')}class="active"#{/if}>#{t("密码设置")}</a>
+    #{if $config.registered_type == 2}<a href="#{store_url('/user/security/email')}" #{if active('/user/security/email')}class="active"#{/if}>#{t("邮箱设置")}</a>#{/if}
+    #{if $config.registered_type == 1}<a href="#{store_url('/user/security/phone')}" #{if active('/user/security/phone')}class="active"#{/if}>#{t("手机设置")}</a>#{/if}
+</nav>

@@ -1,0 +1,16 @@
+#{include file="./Header.html"}
+<div class="ls-auth-card">
+    <div class="ls-auth-card__head">
+        <span class="ls-auth-card__icon"><i class="fa-duotone fa-regular fa-key"></i></span>
+        <div><h2>#{t("找回密码")}</h2><p>#{t("通过手机验证码重置密码")}</p></div>
+    </div>
+    <form class="needs-validation ls-auth-form">
+        <label class="ls-input-group"><span>#{t("手机号")}</span><div><i class="fa-duotone fa-regular fa-mobile"></i><input type="number" class="form-control" name="username" placeholder="#{t('手机号')}" required></div></label>
+        <div class="ls-code-row"><label class="ls-input-group"><span>#{t("验证码")}</span><div><i class="fa-duotone fa-regular fa-key"></i><input type="text" class="form-control" name="captcha" placeholder="#{t('验证码')}" required></div></label><button type="button" class="send-phone-captcha">#{t("发送验证码")}</button></div>
+        <label class="ls-input-group"><span>#{t("新密码")}</span><div><i class="fa-duotone fa-regular fa-lock"></i><input type="password" class="form-control" name="password" placeholder="#{t('设置登录密码')}" minlength="6" required></div></label>
+        <button type="submit" class="ls-auth-submit">#{t("确认重置")}<i class="fa-duotone fa-regular fa-arrow-right"></i></button>
+    </form>
+    <p class="ls-auth-switch">#{t("想起密码？")} <a href="#{store_url('/user/authentication/login')}">#{t("前往登录")}</a></p>
+</div>
+#{ready("/assets/user/controller/auth/forget.phone.js?rev=locale-consistency-20261004-r1")}
+#{include file="./Footer.html"}

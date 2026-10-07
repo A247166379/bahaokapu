@@ -1,0 +1,2195 @@
+class Form {
+
+    constructor(opt) {
+        this.widget = {num: 0};
+        this.attribute = {num: 0};
+        this.tab = [];
+        this.unique = util.generateRandStr(8);
+        this.data = {};
+        this.opt = opt;
+        this.form = {};
+        this.disposables = [];
+        this.disposedControls = new WeakSet();
+        this.layuiEvents = [];
+        this.tipIndexes = new Set();
+        this.isDestroyed = false;
+
+        //html editor register
+        ['basePath', 'workerPath', 'modePath', 'themePath'].forEach(name => {
+            ace.config.set(name, '/assets/common/js/editor/code/lib');
+        });
+
+        opt.tab.forEach((item, index) => {
+            if (item.hide === true) {
+                item.name = "";
+            }
+            let d = `<div class="layui-card-body"><form class="layui-form layui-form-pane ${this.unique + index}" lay-filter="${this.unique + index}">`;
+
+            item.form.forEach((form, ix) => {
+                form.title && (form.title = i18n(form.title));
+                form.placeholder && (form.placeholder = i18n(form.placeholder));
+                form.name = util.replaceDotWithHyphen(form.name);
+                (opt.hasOwnProperty('assign') && util.checkPropertyExistence(opt.assign, form.name)) && (form.default = util.parseStringObject(opt.assign, form.name));
+                this.data[form.name] = {
+                    hide: form.hide ? ' hide' : '',
+                    titleHide: !form.title ? 'hide' : '',
+                    blockMarginZero: !form.title ? "margin-left-zero" : ''
+                }
+
+                this.form[form.name] = form;
+                switch (form.type) {
+                    case 'input':
+                        d += this.inputHtml(form, "text");
+                        break;
+                    case 'date':
+                        d += this.inputHtml(form, "text");
+                        break;
+                    case 'number':
+                        d += this.inputHtml(form, "number");
+                        break;
+                    case 'password':
+                        d += this.inputHtml(form, "password");
+                        break;
+                    case 'checkbox':
+                    case 'radio':
+                    case 'widget':
+                        d += this.getBlockHtml(form, util.icon("icon-loading", "icon-spin", "icon-18px"));
+                        break;
+                    case 'attribute':
+                        d += this.getBlockHtml(form);
+                        break;
+                    case 'select':
+                        d += this.selectHtml(form);
+                        break;
+                    case 'switch':
+                        d += this.switchHtml(form);
+                        break;
+                    case 'textarea':
+                        d += this.textareaHtml(form);
+                        break;
+                    case 'editor':
+                        !form.uploadUrl && (form.uploadUrl = '/admin/api/upload/send');
+                        d += this.editorHtml(form);
+                        break;
+                    case 'editorv2':
+                        !form.uploadUrl && (form.uploadUrl = '/admin/api/upload/send');
+                        d += this.editorv2Html(form);
+                        break;
+                    case 'html':
+                        d += this.htmlHtml(form);
+                        break;
+                    case 'image':
+                        !form.uploadUrl && (form.uploadUrl = '/admin/api/upload/send');
+                        !form.photoAlbumUrl && (form.photoAlbumUrl = '/admin/api/upload/get');
+                        d += this.imageHtml(form);
+                        break;
+                    case 'file':
+                        !form.uploadUrl && (form.uploadUrl = '/admin/api/upload/send');
+                        d += this.fileHtml(form);
+                        break;
+                    case 'treeCheckbox':
+                        d += this.treeCheckboxHtml(form);
+                        break;
+                    case 'treeSelect':
+                        d += this.treeSelectHtml(form);
+                        break;
+                    case 'custom':
+                        d += this.getBlockHtml(form);
+                        break;
+                }
+            });
+            d += `</form></div>`;
+
+            item.name && (item.name = i18n(item.name));
+            this.tab.push({
+                title: item.name,
+                content: d
+            });
+        });
+    }
+
+    setIndex(index) {
+        this.index = index;
+    }
+
+    getIndex() {
+        return this.index;
+    }
+
+    escapeAttribute(value) {
+        const entities = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        };
+        return String(value ?? '').replace(/[&<>"']/g, character => entities[character]);
+    }
+
+    /**
+     * Register a control or cleanup callback owned by this Form. Custom form
+     * fields may return their control from complete() to join the same cleanup.
+     */
+    registerDisposable(control, cleanup = null) {
+        if (!control && typeof cleanup !== 'function') {
+            return control;
+        }
+        const record = {control: control, cleanup: cleanup, disposed: false};
+        if (this.isDestroyed) {
+            this.disposeRecord(record, new Set());
+        } else {
+            this.disposables.push(record);
+        }
+        return control;
+    }
+
+    registerLayuiEvent(emitter, module, event, callback) {
+        if (this.isDestroyed) {
+            return null;
+        }
+        this.layuiEvents.push({module: module, event: event});
+        return emitter.on(event, callback);
+    }
+
+    trackTip(index) {
+        if (index !== undefined && index !== null) {
+            this.tipIndexes.add(index);
+        }
+        return index;
+    }
+
+    closeTip(index) {
+        if (index === undefined || index === null) {
+            return;
+        }
+        layer.close(index);
+        this.tipIndexes.delete(index);
+    }
+
+    disposeControl(control, seen) {
+        if (!control) {
+            return;
+        }
+        if (typeof control === 'object' || typeof control === 'function') {
+            if (seen.has(control) || this.disposedControls.has(control)) {
+                return;
+            }
+            seen.add(control);
+            this.disposedControls.add(control);
+        }
+
+        // CodeMirror created with CodeMirror(host, options) has no destroy API.
+        // Detach its DOM after removing Form/cache references; native listeners
+        // then become collectible with the detached editor tree.
+        const codeMirror = control.cm && typeof control.cm.getWrapperElement === 'function'
+            ? control.cm
+            : (typeof control.getWrapperElement === 'function' ? control : null);
+        if (codeMirror) {
+            if (codeMirror !== control) {
+                seen.add(codeMirror);
+            }
+            try {
+                if (typeof codeMirror.toTextArea === 'function') {
+                    codeMirror.toTextArea();
+                } else {
+                    const wrapper = codeMirror.getWrapperElement();
+                    wrapper && wrapper.parentNode && wrapper.parentNode.removeChild(wrapper);
+                }
+            } catch (error) {
+                util.debug('Form CodeMirror destroy skipped: ' + this.unique, '#ff4f33');
+            }
+        }
+
+        const methods = ['destroy', 'dispose', 'unmount', 'closed'];
+        for (let i = 0; i < methods.length; i++) {
+            if (typeof control[methods[i]] === 'function') {
+                try {
+                    control[methods[i]]();
+                } catch (error) {
+                    util.debug('Form control destroy skipped: ' + this.unique, '#ff4f33');
+                }
+                break;
+            }
+        }
+    }
+
+    disposeRecord(record, seen) {
+        if (!record || record.disposed) {
+            return;
+        }
+        record.disposed = true;
+        try {
+            if (typeof record.cleanup === 'function') {
+                record.cleanup(record.control);
+            } else if (typeof record.control === 'function') {
+                record.control();
+            } else {
+                this.disposeControl(record.control, seen);
+            }
+        } catch (error) {
+            util.debug('Form disposable destroy skipped: ' + this.unique, '#ff4f33');
+        }
+    }
+
+    getMap(name = null) {
+        name = util.replaceDotWithHyphen(name);
+        let map = cache.get(this.unique);
+        if (name) {
+            return map[name];
+        }
+        return map;
+    }
+
+    setData(name, val) {
+        let map = cache.get(this.unique);
+        if (!map) {
+            map = {};
+        }
+        map[name] = val;
+        cache.set(this.unique, map);
+    }
+
+    validator() {
+        let data = this.getData();
+        for (let i = 0; i < this.opt.tab.length; i++) {
+            let item = this.opt.tab[i];
+            for (let j = 0; j < item.form.length; j++) {
+                let form = item.form[j];
+                let value = util.parseStringObject(data, util.replaceDotWithHyphen(form.name));
+                if (form.required === true && value === "") {
+                    layer.msg(`「${form.title ? util.plainText(form.title) : form.name}」${i18n('不能为空值')}`);
+                    return false;
+                }
+                if (form.regex && value) {
+                    const pattern = new RegExp(form.regex.value);
+                    if (!pattern.test(value)) {
+                        layer.msg(`${form.regex.message}`);
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+    getBlockHtml(form, widgetHtml = "") {
+        const title = form.title || '';
+        return `<div class="layui-form-item block-${form.name} ${form.labelPosition === 'top' ? 'md-form-stacked' : ''} ${this.data[form.name]['hide']}">
+            <label class="layui-form-label ${this.data[form.name].titleHide}">${title}${form.required === true ? util.icon('fa-duotone fa-regular fa-asterisk text-danger fs-10 ms-1 icon-top-2') : ''}</label>
+            <div class="${this.data[form.name].blockMarginZero} layui-input-block component-${form.name} component-content" >
+            ${widgetHtml}
+            </div>
+            </div>`;
+    }
+
+    inputHtml(form, type = "text") {
+        const passwordAttributes = type === 'password'
+            ? ' autocomplete="new-password" autocapitalize="none" spellcheck="false"'
+            : '';
+        const inputMode = ['none', 'text', 'decimal', 'numeric', 'tel', 'search', 'email', 'url'].includes(form.inputmode)
+            ? ` inputmode="${form.inputmode}"` : '';
+        const enterKey = ['enter', 'done', 'go', 'next', 'previous', 'search', 'send'].includes(form.enterkeyhint)
+            ? ` enterkeyhint="${form.enterkeyhint}"` : '';
+        return this.getBlockHtml(form, `<input ${form.disabled ? "disabled" : ""} name="${this.escapeAttribute(form.name)}" placeholder="${this.escapeAttribute(form.placeholder)}" type="${this.escapeAttribute(type)}" class="layui-input" value="${this.escapeAttribute(form.default)}"${passwordAttributes}${inputMode}${enterKey}>`);
+    }
+
+    selectHtml(form) {
+        return this.getBlockHtml(form, `<select lay-filter="${this.escapeAttribute(this.unique + form.name)}" name="${this.escapeAttribute(form.name)}" ${form.search ? ' lay-search=""' : ""}><option value="">${this.escapeAttribute(form.placeholder ?? i18n('请选择'))}</option></select>`);
+    }
+
+    switchHtml(form) {
+        return this.getBlockHtml(form, `<input lay-filter="${this.escapeAttribute(this.unique + form.name)}" name="${this.escapeAttribute(form.name)}" type="checkbox" lay-skin="switch" ${form.default == 1 ? "checked" : ""} lay-text="${this.escapeAttribute(form.placeholder ?? 'ON|OFF')}" value="1">`);
+    }
+
+    textareaHtml(form) {
+        return this.getBlockHtml(form, `<textarea ${form.disabled ? "disabled" : ""} ${form.hasOwnProperty('height') ? 'style="height:' + (Number.isInteger(form.height) ? form.height + "px" : form.height) + '"' : ''} name="${this.escapeAttribute(form.name)}" placeholder="${this.escapeAttribute(form.placeholder)}" class="layui-textarea">${this.escapeAttribute(form.default)}</textarea>`);
+    }
+
+    editorHtml(form) {
+        return this.getBlockHtml(form, `<div class="editor-wrapper"><div><button data-type="0" class="button-switch-${this.escapeAttribute(form.name)}" type="button" style="width: 100%;border: none;background: rgba(255, 255, 255, 0.35);border-radius: 5px 5px 0 0;color: #c9b8b8;"><i class="fa-duotone fa-regular fa-code me-1"></i>HTML</button></div><div class="editor-content"><div class="toolbar-container"></div><div class="editor-container"></div></div><textarea class="text-container" style="display: none;" name="${this.escapeAttribute(form.name)}">${this.escapeAttribute(form.default)}</textarea></div>`);
+    }
+
+    htmlHtml(form) {
+        //return this.getBlockHtml(form, `<textarea name="${form.name}">${form.default ?? ""}</textarea>`);
+        return this.getBlockHtml(form, `<div  style="width: 100%;height: ${form.height ? (Number.isInteger(form.height) ? form.height + "px" : form.height) : '400px'}" id="${this.unique}-${form.name}-editor"></div>`);
+    }
+
+    imageHtml(form) {
+        // 相册/外链图标仅用于本次渲染;不能永久改写 form.title —— 插件配置等场景会复用同一份
+        // form 配置对象,若累加会导致多次打开弹窗后图标重复注册(叠加)。故用局部变量并渲染后还原。
+        const originalTitle = form.title;
+        let title = form.title || '';
+        if (form.photoAlbumUrl && title) {
+            title += `<a class="photo-album" style="position: relative;top: 2px;cursor:pointer;">${util.icon('fa-duotone fa-regular fa-image text-success ms-1 fs-5')}</a>`;
+        }
+        title += `<a class="external-input" style="position: relative;top: 2px;cursor:pointer;">${util.icon('fa-duotone fa-regular fa-link ms-1 fs-5 text-primary')}</a>`;
+
+        form.title = title;
+        const html = this.getBlockHtml(form, `<input name="${this.escapeAttribute(form.name)}" placeholder="${this.escapeAttribute(i18n("输入网络图片地址"))}" type="text" class="layui-input" value="${this.escapeAttribute(form.default)}" style="display: none;"><div class="image-render"></div>`);
+        form.title = originalTitle;
+        return html;
+    }
+
+    fileHtml(form) {
+        return this.getBlockHtml(form, `<input name="${this.escapeAttribute(form.name)}" placeholder="${this.escapeAttribute(i18n("输入文件网络地址"))}" type="text" class="layui-input" value="${this.escapeAttribute(form.default)}" style="display: none;"><div class="file-render"></div>`);
+    }
+
+    treeCheckboxHtml(form) {
+        return this.getBlockHtml(form, `<div class="treeCheckbox"></div>`);
+    }
+
+    treeSelectHtml(form) {
+        return this.getBlockHtml(form, `<input type="text" lay-filter="${this.escapeAttribute(this.unique + form.name)}" class="layui-input tree-select"><input name="${this.escapeAttribute(form.name)}"  type="hidden" class="layui-input" value="${this.escapeAttribute(form.default)}">`);
+    }
+
+
+    hide(name) {
+        $('.' + this.unique + " .block-" + util.replaceDotWithHyphen(name)).hide();
+    }
+
+    show(name) {
+        $('.' + this.unique + " .block-" + util.replaceDotWithHyphen(name)).fadeIn(100);
+    }
+
+    setInput(name, val) {
+        name = util.replaceDotWithHyphen(name);
+        $('.' + this.unique + " input[name=" + name + "]").val(val);
+        this.triggerOtherPopupChange(name, val);
+    }
+
+    setCustom(name, val) {
+        name = util.replaceDotWithHyphen(name);
+        $(`.${this.unique} .component-${name}`).html(val);
+        this.triggerOtherPopupChange(name, val);
+    }
+
+    getCustomDom(name) {
+        name = util.replaceDotWithHyphen(name);
+        return $(`.${this.unique} .component-${name}`);
+    }
+
+    setTextarea(name, val) {
+        name = util.replaceDotWithHyphen(name);
+        $('.' + this.unique + " textarea[name=" + name + "]").val(val);
+        this.triggerOtherPopupChange(name, val);
+    }
+
+    appendTextarea(name, val) {
+        name = util.replaceDotWithHyphen(name);
+        $(`.${this.unique} textarea[name=${name}]`).append(val + "\n");
+        this.triggerOtherPopupChange(name, val);
+    }
+
+    clearComponent(name) {
+        name = util.replaceDotWithHyphen(name);
+        let instance = $('.' + this.unique + " .component-" + name);
+        instance.html('');
+        layui.form.render(instance);
+    }
+
+
+    addCheckbox(name, val, title, checked = false, disabled = false, initialize = false) {
+        const form = this.form[name];
+        name = util.replaceDotWithHyphen(name);
+        let instance = $('.' + this.unique + ' .component-' + name);
+        instance.append('<input ' + (disabled ? 'disabled' : '') + ' ' + (form.tag ? 'lay-skin="tag"' : '') + '  lay-filter="' + this.escapeAttribute(this.unique + name) + '"  type="checkbox" ' + (checked ? 'checked' : '') + ' value="' + this.escapeAttribute(val) + '" name="' + this.escapeAttribute(name) + '[]" title="' + this.escapeAttribute(String(title ?? '').replace(/(<([^>]+)>)/ig, "")) + '">');
+
+        if (!initialize) {
+            layui.form.render(instance.find('input'));
+        }
+    }
+
+
+    setCheckbox(name, val, checked) {
+        name = util.replaceDotWithHyphen(name);
+        let instance = $('.' + this.unique + " .component-" + name + " input[value=" + val + "]");
+        instance.prop('checked', checked);
+        layui.form.render(instance);
+        this.triggerOtherPopupChange(name, val, checked);
+    }
+
+    delCheckbox(name, val) {
+        name = util.replaceDotWithHyphen(name);
+        let instance = $('.' + this.unique + " .component-" + name + " input[value=" + val + "]");
+        instance.next().remove();
+        instance.remove();
+        layui.form.render($('.' + this.unique + ' .component-' + name + ' input[type=checkbox]'));
+    }
+
+    addRadio(name, val, title, checked = false, disabled = false) {
+        name = util.replaceDotWithHyphen(name);
+        let instance = $('.' + this.unique + ' .component-' + name);
+        instance.append('<input ' + (disabled ? 'disabled' : '') + ' lay-filter="' + this.escapeAttribute(this.unique + name) + '"  type="radio" ' + (checked ? 'checked' : '') + ' value="' + this.escapeAttribute(val) + '" name="' + this.escapeAttribute(name) + '" title="' + this.escapeAttribute(String(title ?? '').replace(/(<([^>]+)>)/ig, "")) + '">');
+        layui.form.render(instance.find('input'));
+    }
+
+    setRadio(name, val, checked) {
+        name = util.replaceDotWithHyphen(name);
+        let main = $('.' + this.unique + ' .component-' + name + ' input[type=radio]');
+        let instance = $('.' + this.unique + " .component-" + name + " input[value=" + val + "]");
+        main.prop('checked', false);
+        instance.prop('checked', checked);
+        layui.form.render(main);
+        this.triggerOtherPopupChange(name, val);
+    }
+
+    delRadio(name, val) {
+        name = util.replaceDotWithHyphen(name);
+        let instance = $('.' + this.unique + " .component-" + name + " input[value=" + val + "]");
+        instance.next().remove();
+        instance.remove();
+        layui.form.render($('.' + this.unique + ' .component-' + name + ' input[type=radio]'));
+    }
+
+
+    addOption(name, val, title, selected = false, initialize = false) {
+        name = util.replaceDotWithHyphen(name);
+        let instance = $('.' + this.unique + ' .component-' + name + " select");
+        instance.append('<option value="' + this.escapeAttribute(val) + '"  ' + (selected ? 'selected' : '') + '>' + this.escapeAttribute(String(title ?? '').replace(/(<([^>]+)>)/ig, "")) + '</option>');
+        if (!initialize) {
+            layui.form.render(instance);
+        }
+    }
+
+    delOption(name, val) {
+        name = util.replaceDotWithHyphen(name);
+        let instance = $('.' + this.unique + " .component-" + name + " select option[value=" + val + "]");
+        instance.remove();
+        layui.form.render($('.' + this.unique + ' .component-' + name + " select"));
+    }
+
+
+    clearOption(name) {
+        name = util.replaceDotWithHyphen(name);
+        let instance = $('.' + this.unique + ' .component-' + name + " select");
+        instance.html('<option value="">' + this.escapeAttribute(this.form[name].placeholder ?? i18n('请选择')) + '</option>');
+        layui.form.render(instance);
+    }
+
+    setSelected(name, val) {
+        name = util.replaceDotWithHyphen(name);
+        let main = $('.' + this.unique + ' .component-' + name + " select");
+        main.val(val);
+        layui.form.render(main);
+        this.triggerOtherPopupChange(name, val);
+    }
+
+    addWidget(name, instance = null, val = {}) {
+        name = util.replaceDotWithHyphen(name);
+        const escapeAttribute = value => this.escapeAttribute(value);
+        this.widget.num++;
+        let unique = util.generateRandStr(12);
+        let _this = this;
+        let after = true;
+
+        if (!instance) {
+            instance = $('.' + this.unique + ' .component-' + name);
+            after = false;
+        }
+
+
+        let isDict = (val.type == "select" || val.type == "checkbox" || val.type == "radio");
+
+        let typeOptions = '' +
+            '<option ' + (val.type == "text" ? "selected" : "") + ' value="text">' + i18n("文本框") + '</option>' +
+            '<option ' + (val.type == "password" ? "selected" : "") + ' value="password">' + i18n("密码框") + '</option>' +
+            '<option ' + (val.type == "number" ? "selected" : "") + ' value="number">' + i18n("数字框") + '</option>' +
+            '<option ' + (val.type == "select" ? "selected" : "") + ' value="select">' + i18n("下拉框") + '</option>' +
+            '<option ' + (val.type == "checkbox" ? "selected" : "") + ' value="checkbox">' + i18n("多选框") + '</option>' +
+            '<option ' + (val.type == "radio" ? "selected" : "") + ' value="radio">' + i18n("单选框") + '</option>' +
+            '<option ' + (val.type == "textarea" ? "selected" : "") + ' value="textarea">' + i18n("文本域") + '</option>';
+
+        // Card-per-control: labeled fields in a grid, technical regex/error tucked into a 高级 collapse.
+        // NOTE: every input keeps its original name-*/title-*/... attribute — serialization (getData) depends on it.
+        let html = '' +
+            '<div class="widget-block widget-block-' + unique + '">' +
+            '<div class="widget-head">' +
+            '<span class="widget-title"><i class="fa-duotone fa-regular fa-pen-field"></i>' + i18n("控件") + '</span>' +
+            '<span class="widget-btn widget-del widget-del-' + unique + '" title="' + i18n("删除该控件") + '"><i class="fa-duotone fa-regular fa-trash-can"></i></span>' +
+            '</div>' +
+            '<div class="widget-grid">' +
+            '<div class="widget-field"><label>' + i18n("类型") + '</label><div class="widget-general"><select name="type-' + escapeAttribute(name) + '[]" lay-filter="widget-type-' + unique + '">' + typeOptions + '</select></div></div>' +
+            '<div class="widget-field"><label>' + i18n("控件名称") + '</label><input type="text" name="title-' + escapeAttribute(name) + '[]" placeholder="' + escapeAttribute(i18n("如：游戏账号")) + '" class="layui-input" value="' + escapeAttribute(val.hasOwnProperty("cn") ? val.cn : "") + '"></div>' +
+            '<div class="widget-field"><label>' + i18n("字段名（英文）") + '</label><input type="text" name="name-' + escapeAttribute(name) + '[]" placeholder="' + escapeAttribute(i18n("如：username")) + '" class="layui-input" value="' + escapeAttribute(val.name) + '"></div>' +
+            '<div class="widget-field"><label>' + i18n("提示文字") + '</label><input type="text" name="placeholder-' + escapeAttribute(name) + '[]" placeholder="' + escapeAttribute(i18n("购买时输入框内的浅色提示")) + '" class="layui-input" value="' + escapeAttribute(val.placeholder) + '"></div>' +
+            '</div>' +
+            '<div class="widget-field widget-data-field widget-data-' + unique + '"' + (isDict ? '' : ' style="display:none"') + '><label>' + i18n("可选项配置") + '</label><div class="widget-options widget-options-' + unique + '"></div><span class="widget-option-add widget-option-add-' + unique + '"><i class="fa-duotone fa-regular fa-plus"></i> ' + i18n("添加选项") + '</span><textarea name="data-' + escapeAttribute(name) + '[]" class="widget-data-sync widget-data-sync-' + unique + '" style="display:none"></textarea></div>' +
+            '<div class="widget-advanced">' +
+            '<span class="widget-advanced-toggle"><i class="fa-duotone fa-regular fa-chevron-right"></i>' + i18n("高级设置（选填）") + '</span>' +
+            '<div class="widget-advanced-body"><div class="widget-grid">' +
+            '<div class="widget-field"><label>' + i18n("正则校验") + '</label><input type="text" name="regex-' + escapeAttribute(name) + '[]" placeholder="' + escapeAttribute(i18n("如：^\\d{5,11}$")) + '" class="layui-input" value="' + escapeAttribute(val.regex) + '"></div>' +
+            '<div class="widget-field"><label>' + i18n("校验失败提示") + '</label><input type="text" name="error-' + escapeAttribute(name) + '[]" placeholder="' + escapeAttribute(i18n("格式不正确时的提示")) + '" class="layui-input" value="' + escapeAttribute(val.error) + '"></div>' +
+            '</div></div>' +
+            '</div>' +
+            '</div>';
+
+        after ? instance.after(html) : instance.append(html);
+
+        let widgetDataDomInstance = $('.widget-data-' + unique);
+
+        this.registerLayuiEvent(layui.form, 'form', 'select(widget-type-' + unique + ')', event => {
+            switch (event.value) {
+                case 'select':
+                case 'checkbox':
+                case 'radio':
+                    widgetDataDomInstance.show(150);
+                    break;
+                default:
+                    widgetDataDomInstance.hide(150);
+            }
+        });
+
+        $('.widget-del-' + unique).click(function () {
+            if (_this.widget.num <= 1) {
+                layer.msg("(⁎˃ᆺ˂)" + i18n("饶命，请留下最后一只独苗"));
+                return;
+            }
+            let dom = $(this).closest('.widget-block');
+            dom.fadeOut('fast', function () {
+                dom.remove();
+                _this.widget.num--;
+            });
+        });
+
+        $('.widget-block-' + unique + ' .widget-advanced-toggle').click(function () {
+            $(this).closest('.widget-advanced').toggleClass('open');
+        });
+
+        // ---- visual option editor (for 下拉框/多选框/单选框). Each row = 显示名称 + 值; they sync into
+        //      the hidden data-*[] field as comma-joined "显示名称=值" pairs — the exact format that
+        //      app/View/User/Helper.php widget_render() parses (explode ',', then '='). ----
+        let optionsWrap = $('.widget-options-' + unique);
+        let syncField = $('.widget-data-sync-' + unique);
+        function syncOptions() {
+            let pairs = [];
+            optionsWrap.find('.widget-option-row').each(function () {
+                let label = ($(this).find('.widget-opt-label').val() || '').trim();
+                let value = ($(this).find('.widget-opt-value').val() || '').trim();
+                if (label !== '' && value !== '') pairs.push(label + '=' + value);
+            });
+            syncField.val(pairs.join(','));
+        }
+        function addOption(label, value) {
+            let row = $('<div class="widget-option-row">' +
+                '<div class="widget-field"><input type="text" class="layui-input widget-opt-label" placeholder="' + i18n("如：大熊猫") + '"><label>' + i18n("显示名称") + '</label></div>' +
+                '<div class="widget-field"><input type="text" class="layui-input widget-opt-value" placeholder="' + i18n("如：dxm") + '"><label>' + i18n("值") + '</label></div>' +
+                '<span class="widget-btn widget-opt-del" title="' + i18n("删除选项") + '"><i class="fa-duotone fa-regular fa-xmark"></i></span>' +
+                '</div>');
+            row.find('.widget-opt-label').val(label || '');
+            row.find('.widget-opt-value').val(value || '');
+            optionsWrap.append(row);
+            row.find('input').on('input', syncOptions);
+            row.find('.widget-opt-del').on('click', function () {
+                $(this).closest('.widget-option-row').remove();
+                syncOptions();
+            });
+        }
+        let dictStr = (val.dict ?? '').trim();
+        if (dictStr) {
+            dictStr.split(',').forEach(function (pair) {
+                pair = pair.trim();
+                if (!pair) return;
+                let eq = pair.indexOf('=');
+                addOption(eq >= 0 ? pair.slice(0, eq).trim() : pair, eq >= 0 ? pair.slice(eq + 1).trim() : '');
+            });
+        } else {
+            addOption('', '');
+        }
+        syncOptions();
+        $('.widget-option-add-' + unique).on('click', function () { addOption('', ''); });
+
+        $('.widget-block-' + unique).show(150);
+
+        layui.form.render();
+    }
+
+    addAttribute(name, instance = null, val = {}) {
+        name = util.replaceDotWithHyphen(name);
+        const escapedName = this.escapeAttribute(name);
+        this.attribute.num++;
+        let unique = util.generateRandStr(12);
+        let _this = this;
+        let after = true;
+
+        if (!instance) {
+            instance = $('.' + this.unique + ' .component-' + name);
+            after = false;
+        }
+
+        // 字段可选声明：namePlaceholder / valuePlaceholder 覆盖占位符；
+        // valueDict 把「值」换成下拉框；allowEmpty 允许把行删光
+        const cfg = (this.attributeConfig || {})[name] || {};
+        let valueField;
+        if (Array.isArray(cfg.valueDict) && cfg.valueDict.length) {
+            let options = '';
+            cfg.valueDict.forEach(opt => {
+                const id = String(opt.id);
+                options += '<option value="' + this.escapeAttribute(id) + '"'
+                    + (String(val.value) === id ? ' selected' : '') + '>'
+                    + this.escapeAttribute(i18n(opt.name)) + '</option>';
+            });
+            valueField = '<select name="value-' + escapedName + '[]" lay-ignore class="layui-input widget-general widget-w500">' + options + '</select> ';
+        } else {
+            valueField = '<input value="' + this.escapeAttribute(val.value) + '" name="value-' + escapedName + '[]" type="text" placeholder="' + this.escapeAttribute(i18n(cfg.valuePlaceholder || "属性内容")) + '" class="layui-input widget-general widget-w500"> ';
+        }
+        const handle = cfg.sortable
+            ? '<span class="widget-attr-handle" title="' + this.escapeAttribute(i18n('拖动排序')) + '">⠿</span>'
+            : '';
+        let html = '' +
+            '<div class="widget-block widget-block-' + unique + '">' +
+            handle +
+            '<input value="' + this.escapeAttribute(val.name) + '" name="name-' + escapedName + '[]" type="text" placeholder="' + this.escapeAttribute(i18n(cfg.namePlaceholder || "属性名称")) + '" class="layui-input widget-general widget-w220"> ' +
+            valueField +
+            '<div style="display: inline-block;margin-left: 2px;"><i class="layui-icon widget-add-' + unique + '" style="color: #23a148;cursor: pointer;font-size: 16px;font-weight: bold;">&#xe61f;</i> <i class="layui-icon widget-del-' + unique + '" style="color: #eb8181;cursor: pointer;font-size: 16px;font-weight: bold;">&#x1006;</i></div>' +
+            '</div>';
+
+        after ? instance.after(html) : instance.append(html);
+
+        $('.widget-add-' + unique).click(function () {
+            _this.addAttribute(name, $(this).parent().parent(), {});
+        });
+
+        $('.widget-del-' + unique).click(function () {
+            // 声明了 allowEmpty 的字段可以一行不留（比如商品标签本来就可以不设）
+            if (!cfg.allowEmpty && _this.attribute.num <= 1) {
+                layer.msg("(⁎˃ᆺ˂)" + i18n("饶命，请留下最后一只独苗"));
+                return;
+            }
+            let dom = $(this).parent().parent();
+            dom.fadeOut('fast', function () {
+                dom.remove();
+                _this.attribute.num--;
+                cfg.allowEmpty && _this.syncAttributeEmptyState(name);
+            });
+        });
+
+        $('.widget-block-' + unique).show(150);
+        cfg.sortable && this.bindAttributeDrag($('.widget-block-' + unique), name);
+
+        layui.form.render();
+    }
+
+    /**
+     * 属性行的拖动排序。
+     *
+     * 用 Pointer Events 而不是 HTML5 的 dragstart/drop —— 后台有移动端布局，
+     * 而 HTML5 拖放在触屏上根本不触发。指针事件鼠标和触摸一套代码通吃。
+     *
+     * 顺序不额外存：序列化是按 DOM 顺序读 name-x[]/value-x[] 的，
+     * 所以把节点挪到位就等于排好序了。
+     *
+     * 动画用 FLIP（First-Last-Invert-Play）：换完位置先用 transform 把兄弟行
+     * "拉回"原处，再下一帧过渡到 0，于是看起来是滑过去的而不是瞬移。
+     */
+    bindAttributeDrag($row, name) {
+        const container = $('.' + this.unique + ' .component-' + name);
+        const handle = $row.find('.widget-attr-handle');
+        if (!handle.length) {
+            return;
+        }
+
+        const siblings = () => Array.prototype.slice.call(container[0].querySelectorAll('.widget-block'));
+
+        handle.on('pointerdown', function (e) {
+            e.preventDefault();
+            const row = $row[0];
+            const startY = e.originalEvent.clientY;
+            let dy = 0;       // 指针位移
+            let shift = 0;    // DOM 换位后的视觉补偿，保证行始终跟着手指
+
+            row.classList.add('is-dragging');
+            container[0].classList.add('is-sorting');
+
+            const paint = () => {
+                row.style.transform = 'translateY(' + (dy + shift) + 'px)';
+            };
+
+            const move = (ev) => {
+                dy = ev.clientY - startY;
+                paint();
+
+                const y = ev.clientY;
+                siblings().forEach((other) => {
+                    if (other === row) {
+                        return;
+                    }
+                    const box = other.getBoundingClientRect();
+                    const middle = box.top + box.height / 2;
+                    const rowAfter = other.compareDocumentPosition(row) & Node.DOCUMENT_POSITION_FOLLOWING;
+                    const rowBefore = other.compareDocumentPosition(row) & Node.DOCUMENT_POSITION_PRECEDING;
+                    if (!((y < middle && rowAfter) || (y > middle && rowBefore))) {
+                        return;
+                    }
+
+                    // FLIP 第一步：记下换位前所有兄弟行的位置
+                    const before = new Map();
+                    siblings().forEach(n => before.set(n, n.getBoundingClientRect().top));
+                    const rowTopBefore = row.getBoundingClientRect().top;
+
+                    y < middle
+                        ? other.parentNode.insertBefore(row, other)
+                        : other.parentNode.insertBefore(row, other.nextSibling);
+
+                    // 被拖的行：换位后重算补偿，视觉上不能跳
+                    row.style.transform = '';
+                    shift = rowTopBefore - row.getBoundingClientRect().top - dy;
+                    paint();
+
+                    // 其余行：先拉回原位，再下一帧滑到新位
+                    siblings().forEach((n) => {
+                        if (n === row || !before.has(n)) {
+                            return;
+                        }
+                        const delta = before.get(n) - n.getBoundingClientRect().top;
+                        if (!delta) {
+                            return;
+                        }
+                        n.style.transition = 'none';
+                        n.style.transform = 'translateY(' + delta + 'px)';
+                        requestAnimationFrame(() => {
+                            n.style.transition = 'transform .18s cubic-bezier(.2,0,0,1)';
+                            n.style.transform = '';
+                        });
+                    });
+                });
+            };
+
+            const up = () => {
+                document.removeEventListener('pointermove', move);
+                document.removeEventListener('pointerup', up);
+                document.removeEventListener('pointercancel', up);
+
+                // 松手后滑回自己的槽位，而不是啪一下归零
+                row.style.transition = 'transform .18s cubic-bezier(.2,0,0,1)';
+                row.style.transform = '';
+                container[0].classList.remove('is-sorting');
+                setTimeout(() => {
+                    row.classList.remove('is-dragging');
+                    row.style.transition = '';
+                    siblings().forEach(n => { n.style.transition = ''; n.style.transform = ''; });
+                }, 190);
+            };
+
+            document.addEventListener('pointermove', move);
+            document.addEventListener('pointerup', up);
+            document.addEventListener('pointercancel', up);
+        });
+    }
+
+    setSwitch(name, checked) {
+        name = util.replaceDotWithHyphen(name);
+        let instance = $('.' + this.unique + " .component-" + name + " input[type=checkbox]");
+        instance.prop('checked', checked);
+        layui.form.render(instance);
+        this.triggerOtherPopupChange(name, checked);
+    }
+
+    setEditor(name, val) {
+        name = util.replaceDotWithHyphen(name);
+        cache.get(this.unique + name).setHtml(val);
+    }
+
+    setHtml(name, val) {
+        name = util.replaceDotWithHyphen(name);
+        cache.get(this.unique + name).setValue(val);
+    }
+
+    triggerOtherPopupChange(name, ...arg) {
+        name = util.replaceDotWithHyphen(name);
+        let form = this.form[name];
+        (form && form.change) && form.change(this, ...arg);
+    }
+
+    setImage(name, val) {
+        name = util.replaceDotWithHyphen(name);
+        const form = this.form[name];
+
+        $(`.${this.unique} .component-${form.name} input[name=${form.name}]`).val(val);
+        this.uploadImage({
+            container: `.${this.unique} .component-${form.name} .image-render`,
+            imageUrl: val,
+            title: form.placeholder,
+            height: form.height,
+            previewSize: form.previewSize,
+            uploadUrl: form.uploadUrl,
+            input: `.${this.unique} .component-${form.name} input[name=${form.name}]`,
+            change: (url, data) => {
+                this.setData(form.name, url);
+                form.change && form.change(this, url, data);
+            }
+        });
+    }
+
+    uploadImage(opt = {}) {
+        if (this.isDestroyed) {
+            return null;
+        }
+        const layUpload = layui.upload;
+        const imageContainer = $(opt.container);
+        const inputContainer = $(opt.input);
+        const previewSize = Number(opt.previewSize);
+        const compactPreview = Number.isInteger(previewSize) && previewSize >= 32 && previewSize <= 256;
+        if (opt.imageUrl) {
+            const requestedHeight = Number(opt.height ?? 200);
+            const image = $('<img>', {
+                class: 'image-upload',
+                alt: String(opt.title ?? '')
+            }).attr('src', String(opt.imageUrl));
+            image.css('height', (Number.isFinite(requestedHeight) && requestedHeight > 0 ? requestedHeight : 200) + 'px');
+            if (compactPreview) {
+                image.css({width: previewSize + 'px', maxHeight: previewSize + 'px', objectFit: 'contain', objectPosition: 'center', boxSizing: 'border-box'});
+                // Material's normal preview height is !important; this option applies only here.
+                image[0].style.setProperty('height', previewSize + 'px', 'important');
+            }
+            imageContainer.empty().append(image);
+        } else {
+            const button = $('<button>', {
+                type: 'button',
+                class: 'layui-btn btn-upload image-upload'
+            });
+            button.append(util.icon("fa-duotone fa-regular fa-camera me-1 text-white fs-5"));
+            button.append(document.createTextNode(String(opt.title ?? '')));
+            if (compactPreview) button.css({width: previewSize + 'px', height: previewSize + 'px', boxSizing: 'border-box'});
+            imageContainer.empty().append(button);
+        }
+        const upload = layUpload.render({
+            elem: opt.container + ' .image-upload'
+            , url: util.appendParamToUrl(opt.uploadUrl, "mime=image")
+            , accept: 'images'
+            , acceptMime: 'image/*'
+            , exts: 'jpg|png|gif|bmp|jpeg|ico|webp'
+            , size: 1024 * 50
+            , done: res => {
+                if (this.isDestroyed) {
+                    return;
+                }
+                if (res?.code === 200 && typeof res?.data?.url === 'string' && res.data.url !== '') {
+                    opt.imageUrl = res.data.url;
+                    inputContainer.val(res.data.url);
+                    opt.change && opt.change(res.data.url, res.data);
+                    this.uploadImage(opt);
+                    return;
+                }
+                layer.msg(res?.msg || i18n('图片上传失败，请重试'));
+                this.uploadImage(opt);
+            }
+            , error: () => {
+                if (this.isDestroyed) return;
+                layer.msg(i18n('图片上传失败，请重试'));
+                this.uploadImage(opt);
+            }
+            , progress: n => {
+                if (this.isDestroyed) {
+                    return;
+                }
+                let percent = n + '%';
+                imageContainer.html('<div class="layui-progress layui-progress-fileUpload" lay-showpercent="true"><div class="layui-progress-bar" lay-percent="' + percent + '" style="width: ' + percent + ';"><span class="layui-progress-text">' + (n >= 100 ? i18n('图片处理中…') : percent) + '</span></div></div>');
+            }
+        });
+        this.registerDisposable(upload);
+        return upload;
+    }
+
+    uploadFile(opt = {}) {
+        if (this.isDestroyed) {
+            return null;
+        }
+        const layUpload = layui.upload;
+        const fileContainer = $(opt.container);
+        const inputContainer = $(opt.input);
+        let startTime, startBytes, file, fileSize;
+
+        opt.title = opt.fileUrl ? opt.fileUrl.split('/').pop() : opt.title;
+        let classes = 'btn-upload';
+
+        if (!opt.form.title) {
+            classes = "btn-upload-plus";
+        }
+
+        const fileButton = $('<button>', {
+            type: 'button',
+            'data-percentage': '0',
+            class: 'layui-btn ' + classes + ' file-upload'
+        });
+        fileButton.append($('<i>', {class: 'layui-icon layui-icon-file-b'}));
+        fileButton.append(document.createTextNode(' '));
+        fileButton.append($('<span>', {class: 'file-text'}).text(String(opt.title ?? '')));
+        fileContainer.empty().append(fileButton);
+
+        let $options = {
+            elem: opt.container + ' .file-upload'
+            , url: util.appendParamToUrl(opt.uploadUrl, "mime=other")
+            , accept: 'file'
+            , acceptMime: '*/*'
+            , size: 1024 * 50
+            , done: res => {
+                if (this.isDestroyed) {
+                    return;
+                }
+                if (res?.code === 200 && typeof res?.data?.url === 'string' && res.data.url !== '') {
+                    inputContainer.val(res.data.url);
+                    opt.change && opt.change(res.data.url, res.data);
+                    opt.fileUrl = res.data.url;
+                    this.uploadFile(opt);
+                    return;
+                }
+                layer.msg(res?.msg || i18n('文件上传失败，请重试'));
+                this.uploadFile(opt);
+            }
+            , error: () => {
+                if (this.isDestroyed) return;
+                layer.msg(i18n('文件上传失败，请重试'));
+                this.uploadFile(opt);
+            }
+            , before: (obj) => {
+                if (this.isDestroyed) {
+                    return false;
+                }
+                startTime = new Date().getTime();
+                startBytes = 0;
+                let files = obj.pushFile();
+                file = files[Object.keys(files)[0]];
+                fileSize = file.size;
+                fileContainer.find('.file-upload').attr("disabled", true);
+            }
+            , progress: n => {
+                if (this.isDestroyed) {
+                    return;
+                }
+                let uploadProgress = util.getUploadProgress(fileSize, startTime, n / 100);
+                let instance = fileContainer.find('.file-upload');
+
+                let percent = '<span class="block-size-22 text-color-d044f1">' + util.icon("icon-round-loading", "icon-spin") + ' 进度:' + n + '%</span>' +
+                    '<span class="block-size-22 text-color-ff7991">' + util.icon("icon-119") + ' 上行:' + uploadProgress.speed + '</span>' +
+                    '<span class="block-size-34 text-color-6079ff">' + util.icon("icon-wenjianjia") + ' 已上传:' + uploadProgress.size + '</span>' +
+                    '<span class="block-size-22 text-color-f38815">' + util.icon("icon-shijian") + ' 已用时:' + uploadProgress.time + '</span>';
+
+                instance.css("width", "100%");
+                util.updateProgress(instance, n);
+                if (n >= 100) {
+                    instance.attr("disabled", false);
+                    percent = "正在读取文件信息..";
+                }
+
+                instance.html(percent);
+            }
+        };
+
+        if (opt.form.setting) {
+            for (const settingKey in opt.form.setting) {
+                $options[settingKey] = opt.form.setting[settingKey];
+            }
+        }
+
+        const upload = layUpload.render($options);
+        this.registerDisposable(upload);
+        return upload;
+    }
+
+
+    getTab() {
+        return this.tab;
+    }
+
+    getUnique() {
+        return this.unique;
+    }
+
+    getData(target = null) {
+        let obj = {};
+        let _this = this;
+        this.opt.tab.forEach((item, index) => {
+            const literalFields = (Array.isArray(item.form) ? item.form : [])
+                .filter(field => field?.preserveLiteral === true && typeof field.name === 'string')
+                .map(field => field.name);
+            let serializeArray = util.arrayToObject(
+                $('.' + _this.unique + index).serializeArray(),
+                literalFields
+            );
+            obj = Object.assign(obj, serializeArray);
+        });
+
+        this.opt.tab.forEach((item, index) => {
+            item.form.forEach((form, ix) => {
+                switch (form.type) {
+                    case 'checkbox':
+                    case 'treeCheckbox':
+                        !obj.hasOwnProperty(form.name) && (obj[form.name] = []);
+                        break;
+                    case 'treeSelect':
+                        //clearToZero: 未选择时显式提交0，让"清空父级分类"这类操作能真正入库(#779)
+                        if (form.clearToZero === true && !obj.hasOwnProperty(form.name)) {
+                            obj[form.name] = 0;
+                        }
+                        (this.opt.hasOwnProperty("assign") && this.opt.assign.id == obj[form.name]) && (delete obj[form.name]);
+                        break;
+                    case 'switch':
+                        !obj.hasOwnProperty(form.name) && (obj[form.name] = 0);
+                        break;
+                    case 'input':
+                        let color = cache.get(_this.unique + form.name + 'color');
+                        let bold = cache.get(_this.unique + form.name + 'bold');
+
+                        if (color || bold) {
+                            let css = '';
+                            if (color) {
+                                css += 'color: ' + color + ';';
+                            }
+                            if (bold) {
+                                css += 'font-weight: bold;';
+                            }
+                            obj[form.name] = '<span style=\'' + css + '\'>' + obj[form.name] + '</span>';
+                        }
+                        break;
+                    case 'widget':
+                        let json = [];
+                        obj["name-" + form.name].forEach((name, index) => {
+                            if (name != "") {
+                                json.push({
+                                    cn: obj["title-" + form.name][index],
+                                    name: name,
+                                    placeholder: obj["placeholder-" + form.name][index],
+                                    type: obj["type-" + form.name][index],
+                                    regex: obj["regex-" + form.name][index],
+                                    error: obj["error-" + form.name][index],
+                                    dict: obj["data-" + form.name][index]
+                                });
+                            }
+                        });
+                        delete obj["title-" + form.name];
+                        delete obj["placeholder-" + form.name];
+                        delete obj["type-" + form.name];
+                        delete obj["regex-" + form.name];
+                        delete obj["error-" + form.name];
+                        delete obj["name-" + form.name];
+                        delete obj["data-" + form.name];
+                        obj[form.name] = encodeURIComponent(JSON.stringify(json));
+                        break;
+                    case 'attribute':
+                        let attributes = [];
+                        //行可以被删光（allowEmpty），删光之后这两个键根本不存在
+                        const attrNames = [].concat(obj["name-" + form.name] || []);
+                        const attrValues = [].concat(obj["value-" + form.name] || []);
+                        attrNames.forEach((name, index) => {
+                            if (name != "") {
+                                attributes.push({
+                                    name: attrNames[index],
+                                    value: attrValues[index]
+                                });
+                            }
+                        });
+                        delete obj["name-" + form.name];
+                        delete obj["value-" + form.name];
+                        obj[form.name] = encodeURIComponent(JSON.stringify(attributes));
+                        break;
+                    case 'html':
+                        obj[form.name] = this.getMap(form.name);
+                        break;
+                    case 'editorv2': {
+                        // Flush EditorV2's debounced Markdown render before serializing.
+                        // Without this, clicking submit immediately after typing can send
+                        // the previous hidden-textarea value.
+                        const editorV2 = cache.get(_this.unique + form.name + '-editorv2');
+                        if (editorV2 && typeof editorV2.getHTML === 'function') {
+                            obj[form.name] = editorV2.getHTML();
+                        }
+                        break;
+                    }
+                }
+
+                if (form.submit === false) {
+                    delete obj[form.name];
+                }
+            });
+        });
+
+        (this.opt.hasOwnProperty('assign') && this.opt.assign.hasOwnProperty('id')) && (obj.id = this.opt.assign.id);
+
+
+        const data = util.parseNestedKeysFromJSON(obj);
+
+
+        delete data.btSelectAll;
+        delete data.btSelectItem;
+
+        if (!target) {
+            return data;
+        }
+
+        return util.parseStringObject(data, util.replaceDotWithHyphen(target));
+    }
+
+    registerEvent() {
+        if (this.isDestroyed) {
+            return;
+        }
+        let opt = this.opt;
+        opt.tab.forEach((item, index) => {
+            item.form.forEach((form, ix) => {
+                //   (opt.hasOwnProperty('assign') && opt.assign.hasOwnProperty(form.name)) && (form.default = opt.assign[form.name]);
+                (opt.hasOwnProperty('assign') && util.checkPropertyExistence(opt.assign, form.name)) && (form.default = util.parseStringObject(opt.assign, form.name));
+                let instance = null;
+                this.setData(form.name, form.default);
+                switch (form.type) {
+                    case 'input':
+                    case 'number':
+                    case 'password':
+                        this.inputRegister(form);
+                        break;
+                    case 'date':
+                        this.dateRegister(form);
+                        break;
+                    case 'textarea':
+                        this.textareaRegister(form);
+                        break;
+                    case 'checkbox':
+                        this.checkboxRegister(form);
+                        break;
+                    case 'radio':
+                        this.radioRegister(form);
+                        break;
+                    case 'switch':
+                        this.switchRegister(form);
+                        break;
+                    case 'select':
+                        this.selectRegister(form);
+                        break;
+                    case 'editor':
+                        this.editorRegister(form);
+                        break;
+                    case 'editorv2':
+                        this.editorv2Register(form);
+                        break;
+                    case 'html':
+                        this.htmlRegister(form);
+                        break;
+                    case 'image':
+                        this.imageRegister(form);
+                        break;
+                    case 'file':
+                        this.fileRegister(form);
+                        break;
+                    case 'treeCheckbox':
+                        this.treeCheckboxRegister(form);
+                        break;
+                    case 'treeSelect':
+                        this.treeSelectRegister(form);
+                        break;
+                    case 'widget':
+                        this.widgetRegister(form);
+                        break;
+                    case 'attribute':
+                        this.attributeRegister(form);
+                        break;
+                    case 'custom':
+                        this.customRegister(form);
+                        break;
+                }
+                this.tipsRegister(form);
+                this.registerBlockCss(form);
+            });
+        });
+
+        layui.form.render();
+    }
+
+    tipsRegister(form) {
+        if (!form.tips) {
+            return;
+        }
+
+        const components = $('.' + this.unique + ' .component-' + form.name);
+        const mobileLayout = document.documentElement.getAttribute('data-admin-layout') === 'mobile';
+
+        if (mobileLayout) {
+            const helpText = String(i18n(form.tips) ?? '').replace(/<br\s*\/?>/gi, '\n');
+            components.each(function () {
+                const component = $(this);
+                const item = component.closest('.layui-form-item');
+                let help = item.children('.admin-mobile-form-help').filter(function () {
+                    return $(this).attr('data-admin-mobile-help-for') === form.name;
+                }).first();
+
+                if (!help.length) {
+                    help = $('<small>', {
+                        class: 'admin-mobile-form-help',
+                        'data-admin-mobile-help-for': form.name
+                    });
+                    component.after(help);
+                }
+
+                // Treat plugin-provided tips as text. This keeps help readable
+                // without allowing markup or scripts to execute in the form.
+                help.text(helpText);
+            });
+            return;
+        }
+
+        const _this = this;
+        let tipsIndex = 0;
+        components.hover(function () {
+            tipsIndex = _this.trackTip(layer.tips(i18n(form.tips), this, {
+                tips: [1, '#501536'],
+                time: 0
+            }));
+        }, function () {
+            _this.closeTip(tipsIndex);
+        });
+    }
+
+    inputRegister(form) {
+        //监听input值改变事件
+        let instance = $('.' + this.unique + ' input[name=' + form.name + ']');
+        let _this = this;
+
+        instance.change(function () {
+            let val = $(this).val();
+            _this.setData(form.name, val);
+            form.change && form.change(_this, val);
+        });
+
+        form.complete && form.complete(this, instance.val());
+    }
+
+
+    dateRegister(form) {
+        let instance = $(`.${this.unique} input[name=${form.name}]`);
+        let _this = this;
+        const date = layui.laydate.render({
+            elem: `.${this.unique} input[name=${form.name}]`,
+            type: 'datetime'
+        });
+        this.registerDisposable(date);
+
+        instance.change(function () {
+            let val = $(this).val();
+            _this.setData(form.name, val);
+            form.change && form.change(_this, val);
+        });
+        form.complete && form.complete(this, instance.val());
+    }
+
+    textareaRegister(form) {
+        let instance = $('.' + this.unique + ' textarea[name=' + form.name + ']');
+        let _this = this;
+        instance.change(function () {
+            let val = $(this).val();
+            _this.setData(form.name, val);
+            form.change && form.change(_this, val, instance);
+        });
+        form.complete && form.complete(_this, instance.val(), instance);
+    }
+
+    checkboxRegister(form) {
+        let _this = this;
+        let val = [];
+
+        if (util.checkPropertyExistence(this.opt.assign, form.name)) {
+            val = util.parseStringObject(this.opt.assign, form.name) ?? [];
+        } else if (typeof form.default == "object") {
+            val = form.default;
+        }
+
+        _Dict.advanced(form.dict, res => {
+            if (_this.isDestroyed) {
+                return;
+            }
+            _this.clearComponent(form.name);
+            res.forEach(s => {
+                _this.addCheckbox(form.name, s.id, s.name, val.indexOf(s.id) !== -1 || val.indexOf(s.id.toString()) !== -1, form.disable ? form.disable.includes(s.id) : false, true);
+            });
+            _this.registerLayuiEvent(layui.form, 'form', 'checkbox(' + _this.unique + form.name + ')', event => {
+                _this.setData(form.name, event);
+                form.change && form.change(_this, event.value, event.elem.checked);
+            });
+            form.complete && form.complete(_this, form.default ?? []);
+            layui.form.render();
+        });
+    }
+
+    radioRegister(form) {
+        let _this = this;
+        _Dict.advanced(form.dict, res => {
+            if (_this.isDestroyed) {
+                return;
+            }
+            let checkedValue = null;
+            _this.clearComponent(form.name);
+            res.forEach((s, index) => {
+                let checked = s.id == form.default || index == 0;
+                checked && (checkedValue = s.id);
+                _this.addRadio(form.name, s.id, s.name, checked, form.disable ? form.disable.includes(s.id) : false);
+            });
+            form.complete && form.complete(_this, checkedValue);
+        });
+
+        this.registerLayuiEvent(layui.form, 'form', 'radio(' + _this.unique + form.name + ')', event => {
+            _this.setData(form.name, event.value);
+            form.change && form.change(_this, event.value);
+        });
+        layui.form.render();
+    }
+
+    switchRegister(form) {
+        let _this = this;
+        this.registerLayuiEvent(layui.form, 'form', 'switch(' + _this.unique + form.name + ')', event => {
+            _this.setData(form.name, event.elem.checked);
+            form.change && form.change(_this, event.elem.checked);
+        });
+        form.complete && form.complete(_this, form.default == "1");
+        layui.form.render();
+    }
+
+    selectRegister(form) {
+        let _this = this;
+        _Dict.advanced(form.dict, res => {
+            if (_this.isDestroyed) {
+                return;
+            }
+            res.forEach((s, index) => {
+                _this.addOption(form.name, s.id, s.name, s.id == form.default, true);
+            });
+            form.complete && form.complete(_this, form.default ?? null);
+            layui.form.render();
+        });
+
+        this.registerLayuiEvent(layui.form, 'form', 'select(' + _this.unique + form.name + ')', event => {
+            _this.setData(form.name, event.value);
+            form.change && form.change(_this, event.value);
+            // layui 的下拉显示值是 JS 写入的（不触发 input 事件），主动派发一次让 MUI 浮动标签更新
+            setTimeout(() => {
+                const disp = document.querySelector('.' + _this.unique + ' .component-' + form.name + ' .layui-select-title .layui-input');
+                disp && disp.dispatchEvent(new Event('input', {bubbles: true}));
+            }, 0);
+        });
+    }
+
+    editorRegister(form) {
+        let _this = this, wangEditor = window.wangEditor;
+        const editor = new wangEditor(`.${_this.unique} .component-${form.name} .editor-container`);
+
+        const textarea = $('.' + _this.unique + ' .component-' + form.name + ' .text-container');
+        const htmlContainer = $('.' + _this.unique + ' .component-' + form.name + ' .html-container');
+        const editorContent = $('.' + _this.unique + ' .component-' + form.name + ' .editor-content');
+        const editorWrapper = $('.' + _this.unique + ' .component-' + form.name + ' .editor-wrapper');
+        let sourceEditor = null;
+        editor.config.onchange = function (html) {
+            textarea.val(html);
+        }
+        editor.config.zIndex = 0;
+        editor.config.uploadFileName = 'file';
+        editor.config.uploadImgServer = form.uploadUrl + "?mime=image";
+        editor.config.uploadImgAccept = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
+        editor.config.uploadImgMaxLength = 1;
+        editor.config.uploadImgTimeout = 60 * 1000;
+        editor.config.uploadImgMaxSize = 50 * 1024 * 1024; //50M
+        editor.config.uploadImgHooks = {
+            customInsert: function (insertImgFn, result) {
+                if (result.code != 200) {
+                    layer.msg(result.msg);
+                    return;
+                }
+                insertImgFn(result.data.url);
+            },
+            error: function (xhr, editor, resData) {
+                layer.msg(i18n("图片上传失败，文件可能过大"));
+            },
+        }
+        editor.config.uploadVideoServer = form.uploadUrl + "?mime=video";
+        editor.config.uploadVideoName = 'file'
+        editor.config.uploadVideoHooks = {
+            customInsert: function (insertVideoFn, result) {
+                if (result.code != 200) {
+                    layer.msg(result.msg);
+                    return;
+                }
+                insertVideoFn(result.data.url);
+            },
+            error: function (xhr, editor, resData) {
+                layer.msg(i18n("视频上传失败，文件可能过大"));
+            },
+        }
+
+        if (form.hasOwnProperty("height")) {
+            editor.config.height = form.height;
+        } else {
+            editor.config.height = 480;
+        }
+
+        editor.create();
+        form.default && editor.txt.html(form.default);
+        form.default && textarea.val(form.default);
+
+
+        $('.' + _this.unique + ' .component-' + form.name + ' .button-switch-' + form.name).click(function () {
+            let _obj = $(this);
+            let type = _obj.attr("data-type");
+            if (type == 0) {
+                const toolbarWidth = $(`.${_this.unique} .component-${form.name} .editor-container .w-e-toolbar`).width();
+                const heightDifference = toolbarWidth > 1000 ? 40 : 80;
+
+                _obj.attr("data-type", 1);
+                _obj.html('<i class="fa-duotone fa-regular fa-pen-paintbrush me-1"></i>' + i18n("写作"));
+                editorWrapper.append(`<div id="${_this.unique}-${form.name}-html" style="margin-top:10px;width:100%;height: ${form.height ? form.height + heightDifference + "px" : `${480 + heightDifference}px`} "></div>`);
+                sourceEditor = ace.edit(`${_this.unique}-${form.name}-html`, {
+                    theme: "ace/theme/chrome",
+                    mode: "ace/mode/html"
+                });
+                _this.registerDisposable(sourceEditor);
+                sourceEditor.getSession().setUseWrapMode(true);
+                sourceEditor.setOption("showPrintMargin", false);
+                sourceEditor.setValue(textarea.val());
+                sourceEditor.getSession().on('change', function (delta) {
+                    const currentContent = sourceEditor.getValue();
+                    textarea.val(currentContent);
+                    form.change && form.change(_this, currentContent);
+                });
+                editorContent.hide();
+                htmlContainer.fadeIn(150);
+            } else {
+                _obj.attr("data-type", 0);
+                _obj.html('<i class="fa-duotone fa-regular fa-code me-1"></i>HTML');
+                editor.txt.html(textarea.val());
+                sourceEditor && _this.disposeControl(sourceEditor, new Set());
+                sourceEditor = null;
+                $(`#${_this.unique}-${form.name}-html`).remove();
+                editorContent.fadeIn(150);
+            }
+        });
+
+
+        form.complete && form.complete(_this, form.default);
+        cache.set(_this.unique + form.name, editor);
+        this.registerDisposable(editor);
+
+        layui.form.render();
+    }
+
+    editorv2Html(form) {
+        return this.getBlockHtml(form, EditorV2.buildHtml({
+            name: form.name,
+            placeholder: form.placeholder,
+            allowHtmlSource: form.allowHtmlSource,
+            allowRawHtml: form.allowRawHtml
+        }));
+    }
+
+    editorv2Register(form) {
+        const _this = this;
+        // Scope the lookup to this form row. A field named "content" otherwise
+        // collides with the generic .component-content class used by every row,
+        // which makes CodeMirror initialize against the first (wrong) field.
+        const rootEl = $(`.${_this.unique} .block-${form.name} > .component-${form.name} > .ev2-editor`).get(0);
+        if (!rootEl) {
+            throw new Error(`EditorV2 field target not found: ${form.name}`);
+        }
+        const api = EditorV2.register(rootEl, {
+            name: form.name,
+            uploadUrl: form.uploadUrl,
+            height: form.height,
+            value: form.default,   // seed the stored HTML (else the editor loads blank → saving wipes the description)
+            allowHtmlSource: form.allowHtmlSource,
+            allowRawHtml: form.allowRawHtml,
+            onChange: (html) => { form.change && form.change(_this, html); }
+        });
+        form.complete && form.complete(_this, api.getHTML());
+        cache.set(_this.unique + form.name, api.cm);
+        cache.set(_this.unique + form.name + '-editorv2', api);
+        this.registerDisposable(api);
+        layui.form.render();
+    }
+
+    htmlRegister(form) {
+        let _this = this;
+        if (['html', 'javascript', 'css'].includes(form.language ?? "html")) {
+            util.loadScripts(`/assets/common/js/editor/code/lib/beautify/${form.language ?? "html"}.js`);
+        }
+        const editor = ace.edit(`${this.unique}-${form.name}-editor`, {
+            theme: "ace/theme/chrome",
+            mode: "ace/mode/" + (form.language ?? "html")
+        });
+        editor.commands.addCommand({
+            name: 'formatCode',
+            bindKey: {win: 'Ctrl-Alt-L', mac: 'Command-Option-L'},
+            exec: function (editor) {
+                let code = editor.getValue();
+                switch (form.language ?? "html") {
+                    case "html":
+                        code = html_beautify(code, {indent_size: 2});
+                        break;
+                    case "javascript":
+                        code = js_beautify(code, {indent_size: 2});
+                        break;
+                    case "css":
+                        code = css_beautify(code, {indent_size: 2});
+                        break;
+                }
+                editor.setValue(code, -1);
+            }
+        });
+
+        if (form.autoWrap === true) {
+            editor.getSession().setUseWrapMode(true);
+        }
+
+        editor.setOption("showPrintMargin", false);
+        editor.getSession().on('change', function (delta) {
+            const currentContent = editor.getValue();
+            _this.setData(form.name, currentContent);
+            form.change && form.change(_this, currentContent);
+        });
+
+        form.default && editor.setValue(form.default);
+        form.default && (_this.setData(form.name, form.default));
+        form.complete && form.complete(_this, form.default);
+        if (form.disabled) {
+            editor.setReadOnly(true);
+            editor.renderer.$cursorLayer.element.style.display = "none";
+        }
+        cache.set(this.unique + form.name, editor);
+        this.registerDisposable(editor);
+    }
+
+    imageRegister(form) {
+        let _this = this;
+        this.uploadImage({
+            container: `.${_this.unique} .component-${form.name} .image-render`,
+            imageUrl: form.default,
+            title: form.placeholder,
+            height: form.height,
+            previewSize: form.previewSize,
+            uploadUrl: form.uploadUrl,
+            input: $(`.${_this.unique} .component-${form.name} input[name=${form.name}]`),
+            change: (url, data) => {
+                _this.setData(form.name, url);
+                form.change && form.change(_this, url, data);
+            }
+        });
+        form.complete && form.complete(_this, form.default);
+
+        let tipsIndex, externalInputTipsIndex;
+        const $externalInput = $(`.${_this.unique} .block-${form.name} .external-input`);
+        $externalInput.click(() => {
+            const defaultUrl = $(`.${this.unique} .component-${form.name} input[name=${form.name}]`).val();
+            component.popup({
+                submit: (data, index) => {
+                    if (!data.url) {
+                        layer.msg(i18n("外链不能为空"));
+                        return;
+                    }
+                    const imageUrl = String(data.url).trim();
+                    try {
+                        const parsed = new URL(imageUrl, location.origin);
+                        if (!['http:', 'https:'].includes(parsed.protocol) || /[\x00-\x20\\]/.test(imageUrl)
+                            || (imageUrl.startsWith('//')) || (!imageUrl.startsWith('/') && !/^https?:\/\//i.test(imageUrl))) {
+                            throw new Error('Invalid image URL');
+                        }
+                    } catch (_) {
+                        layer.msg(i18n('图片地址需使用 http:// 或 https:// 开头'));
+                        return;
+                    }
+                    _this.setImage(form.name, imageUrl);
+                    form.change && form.change(_this, imageUrl, {
+                        append: {thumb_url: imageUrl}
+                    });
+                    layer.close(index);
+                },
+                tab: [
+                    {
+                        name: util.icon('fa-duotone fa-regular fa-link') + " 设置外部图片链接",
+                        form: [
+                            {
+                                title: false,
+                                name: "url",
+                                type: "input",
+                                placeholder: "图片外链，需要 http:// 或 https:// 开头",
+                                tips: "图片外链，需要 http:// 或 https:// 开头",
+                                default: defaultUrl
+                            }
+                        ]
+                    },
+
+                ],
+                autoPosition: true,
+                height: "auto",
+                width: "560px",
+                maxmin: false,
+                shadeClose: true,
+                assign: {}
+            });
+        });
+
+        $externalInput.hover(function () {
+            externalInputTipsIndex = _this.trackTip(layer.tips(i18n("外部链接"), this, {
+                tips: [2, '#501536'],
+                time: 0
+            }));
+        }, function () {
+            _this.closeTip(externalInputTipsIndex);
+        });
+
+        if (form.photoAlbumUrl) {
+            //注册相册
+            const $photoAlbum = $(`.${_this.unique} .block-${form.name} .photo-album`);
+            $photoAlbum.click(function () {
+                let popupIndex = null;
+                component.popup({
+                    submit: false,
+                    tab: [
+                        {
+                            name: util.icon("fa-duotone fa-regular fa-image") + " 相册",
+                            form: [
+                                {
+                                    name: "photo_album",
+                                    type: "custom",
+                                    complete: (pop, dom) => {
+                                        dom.html(`<div class="block-content"><table id="photo-album-table"></table>`);
+                                        const table = new Table(form.photoAlbumUrl, dom.find('#photo-album-table'));
+                                        table.setPagination(30, [30, 50, 200, 500, 1000]);
+                                        table.setWhere("equal-type", "image");
+                                        table.setWhere("display_scope", 1);
+                                        table.setColumns([
+                                            {
+                                                field: 'path', title: '', formatter: (path, item) => {
+                                                    return `<img class="photo-album-selected" src="${item.thumb_url ?? path}">`;
+                                                },
+                                                events: {
+                                                    'click .photo-album-selected': (event, path, item) => {
+                                                        _this.setImage(form.name, path);
+                                                        layer.close(popupIndex);
+                                                        form.change && form.change(_this, path, {
+                                                            append: {thumb_url: item.thumb_url ?? path}
+                                                        });
+                                                    }
+                                                }
+                                            },
+                                        ]);
+                                        table.render();
+                                    }
+                                },
+                            ]
+                        }
+                    ],
+                    assign: {},
+                    autoPosition: true,
+                    shadeClose: true,
+                    maxmin: false,
+                    width: "800px",
+                    renderComplete: (unique, index) => {
+                        popupIndex = index;
+                        $(`.${unique} .layui-card-body`).css("padding-top", "0").find(".block-content").css("padding", "0");
+                    }
+                });
+            });
+            $photoAlbum.hover(function () {
+                tipsIndex = _this.trackTip(layer.tips(i18n("相册"), this, {
+                    tips: [2, '#501536'],
+                    time: 0
+                }));
+            }, function () {
+                _this.closeTip(tipsIndex);
+            });
+        }
+
+        layui.form.render();
+    }
+
+    fileRegister(form) {
+        this.uploadFile({
+            form: form,
+            container: '.' + this.unique + ' .component-' + form.name + ' .file-render',
+            fileUrl: form.default,
+            title: form.placeholder,
+            height: form.height,
+            uploadUrl: form.uploadUrl,
+            input: '.' + this.unique + ' .component-' + form.name + ' input[name=' + form.name + ']',
+            change: (url, data) => {
+                this.setData(form.name, url);
+                form.change && form.change(url, data);
+            }
+        });
+        form.complete && form.complete(this, form.default);
+        layui.form.render();
+    }
+
+    treeCheckboxRegister(form) {
+        let _this = this;
+        _Dict.advanced(form.dict, res => {
+            if (_this.isDestroyed) {
+                return;
+            }
+            const selector = '.' + _this.unique + ' .component-' + form.name + ' .treeCheckbox';
+
+            layui.authtree.render(selector, res, {
+                inputname: form.name + '[]'
+                , layfilter: _this.unique + form.name
+                , childKey: 'children'
+                , valueKey: 'id'
+                , 'theme': 'auth-skin-universal'
+                , autowidth: true
+                , openchecked: false
+                , autochecked: true
+                , checkedKey: form.default ?? []
+            });
+            _this.registerLayuiEvent(layui.authtree, 'authtree', 'change(' + _this.unique + form.name + ')', function (data) {
+                let checked = data && Array.isArray(data.checked) ? data.checked : layui.authtree.getChecked(selector);
+                _this.setData(form.name, checked);
+                form.change && form.change(_this, checked, data);
+            });
+
+            form.complete && form.complete(_this, form.default);
+        });
+
+        layui.form.render();
+    }
+
+    treeSelectRegister(form) {
+        //clearToZero: 树顶注入"设为顶级"节点(id=0)供点击清空——treeSelect的隐藏input
+        //始终携带旧值随表单提交，没有该节点用户无法真正移出父级(#779)
+        if (form.clearToZero === true && !Array.isArray(form.dict)) {
+            let _self = this;
+            _Dict.advanced(form.dict, res => {
+                if (_self.isDestroyed) {
+                    return;
+                }
+                form.dict = [{
+                    id: 0,
+                    name: i18n("不设置父级，作为顶级分类"),
+                    fontCss: {color: "var(--md-primary)", "font-weight": "600"}
+                }].concat(Array.isArray(res) ? res : []);
+                _self.treeSelectRegister(form);
+            });
+            return;
+        }
+
+        let _this = this;
+        const treeSelect = layui.treeSelect.render({
+            // 选择器
+            elem: '.' + _this.unique + ' .component-' + form.name + ' .tree-select',
+            // 数据
+            data: form.dict,
+            // 异步加载方式：get/post，默认get
+            //type: 'post',
+            // 占位符
+            placeholder: form.placeholder,
+            // 是否开启搜索功能：true/false，默认false
+            search: true,
+            //禁用父级
+            parent: form?.parent ?? true,
+            // 点击回调
+            click: function (d) {
+                if (_this.isDestroyed) {
+                    return;
+                }
+                $('.' + _this.unique + "  .component-" + form.name + " input[name=" + form.name + "]").val(d.current.id);
+                form.change && form.change(_this, d.current.id);
+                // treeSelect 的显示值是 JS 写入的（不触发 input 事件），主动派发一次让 MUI 浮动标签更新
+                setTimeout(() => {
+                    const disp = document.querySelector('.' + _this.unique + ' .component-' + form.name + ' .layui-select-title .layui-input');
+                    disp && disp.dispatchEvent(new Event('input', {bubbles: true}));
+                }, 0);
+            },
+            // 加载完成后的回调函数
+            success: function (d) {
+                if (_this.isDestroyed) {
+                    return;
+                }
+                if (form.default) {
+                    layui.treeSelect.checkNode(_this.unique + form.name, parseInt(form.default));
+                }
+                form.complete && form.complete(_this, form.default);
+            }
+        });
+        this.registerDisposable(treeSelect);
+
+        layui.form.render();
+    }
+
+
+    /* 输入清洗层修正(#833)前的一小段版本窗口里，widget/attribute 的 JSON 可能以
+     * URL 编码态入库（%5B%7B 开头）。读到这种形态先解一层再 parse，老数据不炸弹窗。 */
+    decodeEncodedJson(raw) {
+        return typeof raw === 'string' && /^%(?:5B|7B)/i.test(raw) ? decodeURIComponent(raw) : raw;
+    }
+
+    widgetRegister(form) {
+        this.clearComponent(form.name);
+        let name = util.replaceDotWithHyphen(form.name);
+        let preset = [];
+        try {
+            preset = form.default ? JSON.parse(this.decodeEncodedJson(form.default)) : [];
+        } catch (e) {
+            //脏数据只当没有控件，绝不能让整个编辑弹窗装配中断
+            preset = [];
+        }
+        if (!Array.isArray(preset)) {
+            preset = [];
+        }
+        if (preset.length <= 0) {
+            this.addWidget(form.name);
+        } else {
+            preset.forEach(widget => {
+                this.addWidget(form.name, null, widget);
+            });
+        }
+        // single "add control" button below the cards (new card appends after the last one, before this button)
+        let container = $('.' + this.unique + ' .component-' + name);
+        $('.' + this.unique + ' .widget-add-control').remove();
+        let addBtn = $('<button type="button" class="widget-add-control"><i class="fa-duotone fa-regular fa-plus"></i> ' + i18n("添加控件") + '</button>');
+        container.after(addBtn);
+        addBtn.on('click', () => {
+            let lastCard = container.find('.widget-block').last();
+            lastCard.length ? this.addWidget(form.name, lastCard, {}) : this.addWidget(form.name);
+        });
+        form.complete && form.complete(this, form.default);
+        layui.form.render();
+    }
+
+    attributeRegister(form) {
+        const name = util.replaceDotWithHyphen(form.name);
+        this.attributeConfig = this.attributeConfig || {};
+        this.attributeConfig[name] = {
+            namePlaceholder: form.namePlaceholder,
+            valuePlaceholder: form.valuePlaceholder,
+            valueDict: form.valueDict,
+            allowEmpty: form.allowEmpty === true,
+            sortable: form.sortable === true
+        };
+
+        let preset = [];
+        try {
+            preset = form.default ? JSON.parse(this.decodeEncodedJson(form.default)) : [];
+        } catch (e) {
+            preset = [];
+        }
+        if (!Array.isArray(preset)) {
+            preset = [];
+        }
+
+        if (preset.length <= 0) {
+            // allowEmpty 的字段：一条都没有时就真的一行不放，只留「添加」入口
+            !this.attributeConfig[name].allowEmpty && this.addAttribute(form.name);
+        } else {
+            preset.forEach(widget => {
+                this.addAttribute(form.name, null, widget);
+            });
+        }
+
+        this.attributeConfig[name].allowEmpty && this.mountAttributeAdder(form.name);
+
+        form.complete && form.complete(this, form.default);
+        layui.form.render();
+    }
+
+    /**
+     * allowEmpty 字段的常驻「添加」按钮。
+     * 行可以被删光，删光之后必须还有地方能加回来，所以这个按钮独立于行存在。
+     */
+    mountAttributeAdder(rawName) {
+        const name = util.replaceDotWithHyphen(rawName);
+        const _this = this;
+        const container = $('.' + this.unique + ' .component-' + name);
+        if (container.find('.widget-attr-adder').length) {
+            return;
+        }
+        container.append('<a href="#" data-acg-noop class="widget-attr-adder">'
+            + '<i class="layui-icon">&#xe61f;</i> ' + i18n('添加') + '</a>');
+        container.find('.widget-attr-adder').click(function () {
+            const last = container.find('.widget-block').last();
+            last.length ? _this.addAttribute(rawName, last, {}) : _this.addAttribute(rawName);
+            _this.syncAttributeEmptyState(name);
+        });
+        this.syncAttributeEmptyState(name);
+    }
+
+    /**
+     * 一行都没有时给个说明文案，别让人对着空白发愣。
+     *
+     * 顺带给外层打个 is-attr-empty 标记：后台的 .mui-float 是「轮廓式浮动标签」，
+     * 标签当图例压在上边框上，而那套样式只有在框里确实有 .layui-input 时才生效。
+     * 行被删光之后框没了，标签就掉回左上角跟这里的内容叠在一起。
+     * 所以空态要显式换成普通的「标签在上、内容在下」布局。
+     */
+    syncAttributeEmptyState(name) {
+        const container = $('.' + this.unique + ' .component-' + util.replaceDotWithHyphen(name));
+        const adder = container.find('.widget-attr-adder');
+        adder.appendTo(container);   // 保证「添加」永远在最后
+        const empty = container.find('.widget-block').length === 0;
+        let tip = container.find('.widget-attr-empty');
+        if (empty && !tip.length) {
+            adder.before('<span class="widget-attr-empty">' + i18n('未设置') + '</span>');
+        } else if (!empty) {
+            tip.remove();
+        }
+        container.closest('.layui-form-item').toggleClass('is-attr-empty', empty);
+    }
+
+    customRegister(form) {
+        const control = form.complete && form.complete(this, $('.' + this.unique + ' .component-' + form.name));
+        this.registerDisposable(control);
+    }
+
+    createForm(form, targetName, sequence = "after") {
+        form.title && (form.title = i18n(form.title));
+        form.name = util.replaceDotWithHyphen(form.name);
+
+        this.data[form.name] = {
+            hide: form.hide ? ' hide' : '',
+            titleHide: !form.title ? 'hide' : '',
+            blockMarginZero: !form.title ? "margin-left-zero" : ''
+        }
+
+        let d = "";
+        switch (form.type) {
+            case 'input':
+                d = this.inputHtml(form, "text");
+                break;
+            case 'date':
+                d = this.inputHtml(form, 'text');
+                break;
+            case 'number':
+                d = this.inputHtml(form, "number");
+                break;
+            case 'password':
+                d = this.inputHtml(form, "password");
+                break;
+            case 'textarea':
+                d = this.textareaHtml(form);
+                break;
+            case 'checkbox':
+                d = this.getBlockHtml(form, util.icon("icon-loading", "icon-spin", "icon-18px"));
+                break;
+            case 'radio':
+                d = this.getBlockHtml(form, util.icon("icon-loading", "icon-spin", "icon-18px"));
+                break;
+            case 'switch':
+                d = this.switchHtml(form)
+                break;
+            case 'select':
+                d = this.selectHtml(form);
+                break;
+            case 'editor':
+                d = this.editorHtml(form);
+                break;
+            case 'html':
+                d = this.htmlHtml(form);
+                break;
+            case 'image':
+                d = this.imageHtml(form);
+                break;
+            case 'file':
+                d = this.fileHtml(form);
+                break;
+            case 'treeCheckbox':
+                d = this.treeCheckboxHtml(form);
+                break;
+            case 'treeSelect':
+                d = this.treeSelectHtml(form);
+                break;
+            case 'widget':
+                d = this.getBlockHtml(form);
+                break;
+            case 'custom':
+                d = this.getBlockHtml(form);
+                break;
+        }
+
+
+        let instance = $('.' + this.unique + " .block-" + targetName);
+        if (sequence == "after") {
+            instance.after(d);
+        } else {
+            instance.before(d);
+        }
+
+        switch (form.type) {
+            case 'input':
+            case 'number':
+            case 'password':
+                this.inputRegister(form);
+                break;
+            case 'date':
+                this.dateRegister(form);
+                break;
+            case 'textarea':
+                this.textareaRegister(form);
+                break;
+            case 'checkbox':
+                this.checkboxRegister(form);
+                break;
+            case 'radio':
+                this.radioRegister(form);
+                break;
+            case 'switch':
+                this.switchRegister(form);
+                break;
+            case 'select':
+                this.selectRegister(form);
+                break;
+            case 'editor':
+                this.editorRegister(form);
+                break;
+            case 'html':
+                this.htmlRegister(form);
+                break;
+            case 'image':
+                this.imageRegister(form);
+                break;
+            case 'file':
+                this.fileRegister(form);
+                break;
+            case 'treeCheckbox':
+                this.treeCheckboxRegister(form);
+                break;
+            case 'treeSelect':
+                this.treeSelectRegister(form);
+                break;
+            case 'widget':
+                this.widgetRegister(form);
+                break;
+            case 'custom':
+                this.customRegister(form);
+                break;
+        }
+
+        layui.form.render();
+        this.form[form.name] = form;
+    }
+
+    removeForm(name) {
+        let instance = $('.' + this.unique + " .block-" + name);
+        instance.remove();
+    }
+
+    /**
+     * Release everything created by this Form. The method is intentionally
+     * idempotent because a mobile overlay and PJAX teardown can both reach it.
+     */
+    destroy() {
+        if (this.isDestroyed) {
+            return this;
+        }
+        this.isDestroyed = true;
+
+        this.tipIndexes.forEach(index => {
+            try {
+                layer.close(index);
+            } catch (error) {
+                util.debug('Form tip destroy skipped: ' + this.unique, '#ff4f33');
+            }
+        });
+        this.tipIndexes.clear();
+
+        if (typeof layui !== 'undefined' && typeof layui.off === 'function') {
+            this.layuiEvents.forEach(binding => {
+                try {
+                    layui.off(binding.event, binding.module);
+                } catch (error) {
+                    util.debug('Form layui event destroy skipped: ' + this.unique, '#ff4f33');
+                }
+            });
+        }
+        this.layuiEvents = [];
+
+        let $roots = $();
+        this.tab.forEach((tab, index) => {
+            $roots = $roots.add('.' + this.unique + index);
+        });
+        const seen = new Set();
+
+        // Custom fields can mount nested Table instances. Destroy them while
+        // their roots are still connected so lifecycle snapshots and handlers
+        // are released before Layer/mobile overlay removes the popup DOM.
+        if (typeof Table !== 'undefined' && typeof Table.destroyAll === 'function') {
+            $roots.each(function () { Table.destroyAll(this); });
+        }
+
+        // treeSelect delegates handlers to body and keeps zTree state outside
+        // the original input, so remove the selectors that can be identified.
+        $roots.find('.layui-treeSelect').add($roots.filter('.layui-treeSelect')).each(function () {
+            const $tree = $(this);
+            const titleId = $tree.find('.layui-select-title').attr('id');
+            const inputId = $tree.find('.layui-select-title input').attr('id');
+            const bodyId = $tree.find('.layui-treeSelect-body').attr('id');
+            titleId && $('body').off('click', '#' + titleId);
+            inputId && $('body').off('input propertychange', '#' + inputId);
+            $tree.attr('id') && $('body').off('click', '#' + $tree.attr('id') + ' .layui-anim');
+            if (bodyId && $.fn.zTree && typeof $.fn.zTree.destroy === 'function') {
+                try {
+                    $.fn.zTree.destroy(bodyId);
+                } catch (error) {
+                    util.debug('Form treeSelect destroy skipped: ' + bodyId, '#ff4f33');
+                }
+            }
+            $tree.siblings('.tree-select').show();
+            $tree.remove();
+        });
+
+        // authtree stores each rendered tree in module-level maps.
+        if (typeof layui !== 'undefined' && layui.authtree) {
+            Object.values(this.form).forEach(form => {
+                if (form.type !== 'treeCheckbox') {
+                    return;
+                }
+                const selector = '.' + this.unique + ' .component-' + form.name + ' .treeCheckbox';
+                ['renderedTrees', 'checkedNode', 'notCheckedNode', 'lastCheckedNode', 'lastNotCheckedNode'].forEach(map => {
+                    layui.authtree[map] && delete layui.authtree[map][selector];
+                });
+            });
+        }
+
+        // Destroy Ace instances (including an EditorV2/HTML source editor that
+        // is currently open) before the owning DOM disappears.
+        $roots.find('.ace_editor').add($roots.filter('.ace_editor')).each((index, element) => {
+            this.disposeControl(element.env && element.env.editor, seen);
+        });
+
+        this.disposables.forEach(record => this.disposeRecord(record, seen));
+
+        const cacheKeys = (typeof cache !== 'undefined' && cache.caches)
+            ? Object.keys(cache.caches).filter(key => key === this.unique || key.indexOf(this.unique) === 0)
+            : [];
+        cacheKeys.forEach(key => {
+            this.disposeControl(cache.get(key), seen);
+            cache.del(key);
+        });
+
+        // A visible laydate panel is outside the form root. Remove only panels
+        // whose lay-key belongs to an input owned by this Form.
+        $roots.find('[lay-key]').each(function () {
+            const key = $(this).attr('lay-key');
+            $('.layui-laydate').filter(function () {
+                return $(this).attr('lay-key') === key || this.id === 'layui-laydate' + key;
+            }).remove();
+        });
+
+        $roots.each(function () {
+            const $root = $(this);
+            $root.find('*').addBack().stop(true, true).off();
+            $root.find('input.layui-upload-file[type="file"]').remove();
+        });
+
+        this.disposables = [];
+        this.tab = [];
+        this.data = {};
+        this.form = {};
+        this.opt = {tab: []};
+        this.index = null;
+        return this;
+    }
+
+    getDomHeight(name) {
+        let instance = $('.' + this.unique + ' .block-' + name);
+        return instance.height();
+    }
+
+    registerBlockCss(form) {
+        let instance = $("." + this.unique + " .block-" + form.name);
+        if (form.css) {
+            for (const cssKey in form.css) {
+                instance.css(cssKey, form.css[cssKey]);
+            }
+        }
+    }
+}

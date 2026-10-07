@@ -1,0 +1,10 @@
+<section class="card mb-4" aria-label="前台五语言访问地址">
+    <div class="card-body py-4">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3"><strong>前台访问地址</strong><span class="text-muted small">后台统一使用简体中文</span></div>
+        <div class="d-flex flex-wrap gap-3">
+            #{foreach $storefrontAddresses as $entry}
+            <a href="#{$entry.url}" target="_blank" rel="noopener" class="rounded border p-3" style="flex:1 1 210px;min-width:0;text-decoration:none"><strong class="d-block mb-1">#{$entry.name}</strong><span class="text-muted small d-block" style="overflow-wrap:anywhere">#{$entry.address}</span></a>
+            #{/foreach}
+        </div>
+    </div>
+</section>

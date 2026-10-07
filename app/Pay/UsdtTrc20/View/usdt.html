@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="#{$displayLocale|escape}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex,nofollow">
+    <meta name="referrer" content="no-referrer">
+    <title>USDT · TRC20</title>
+    <link rel="stylesheet" href="/assets/user/css/usdt-cashier.css?v=20261004">
+    <script src="/assets/static/jquery.min.js" defer></script>
+    <script src="/assets/static/jquery.qrcode.min.js" defer></script>
+    <script src="/assets/user/js/usdt-cashier.js?v=20261004" defer></script>
+</head>
+<body data-store-default-appearance="#{$storeAppearance|escape}">
+<main id="usdt-cashier" class="usdt-card" data-locale="#{$displayLocale|escape}" data-trade-no="#{$order->trade_no|escape}"
+      data-address="#{$option.receive_address|escape}" data-usdt-amount="#{$option.usdt_amount|escape}"
+      data-expires-at="#{$option.expires_at|escape}" data-settlement-expires-at="#{$option.settlement_expires_at|escape}"
+      data-poll-token="#{$option.poll_token|escape}" data-return-url="#{$option.return_url|escape}"
+      data-poll-interval="#{$option.poll_interval_seconds|escape}">
+    <div class="usdt-brand">USDT <span>TRC20</span></div>
+    <h1 data-usdt-text="title">USDT 支付</h1>
+    <p class="usdt-intro" data-usdt-text="instruction">请使用 TRON（TRC20）网络转入精确金额。</p>
+    <p class="usdt-amount"><strong id="usdt-amount">#{$option.usdt_amount|escape}</strong> <span>USDT</span></p>
+    <button type="button" class="usdt-secondary" data-usdt-copy="amount" data-usdt-text="copyAmount">复制金额</button>
+    <div id="usdt-qr" class="usdt-qr" role="img" aria-label="TRC20 address QR"></div>
+    <label class="usdt-label" data-usdt-text="address">收款地址</label>
+    <div class="usdt-address" id="usdt-address">#{$option.receive_address|escape}</div>
+    <button type="button" class="usdt-secondary" data-usdt-copy="address" data-usdt-text="copyAddress">复制地址</button>
+    <p class="usdt-notice" data-usdt-text="notice">仅限 USDT-TRC20。请保留全部小数位，二维码只包含收款地址。</p>
+    <dl class="usdt-details">
+        <div><dt data-usdt-text="order">订单号</dt><dd>#{$order->trade_no|escape}</dd></div>
+        <div><dt data-usdt-text="time">付款剩余时间</dt><dd id="usdt-countdown">--:--</dd></div>
+    </dl>
+    <p id="usdt-status" class="usdt-status" role="status" aria-live="polite"></p>
+    <form id="usdt-verify-form">
+        <label class="usdt-label" for="usdt-txid" data-usdt-text="txidLabel">已转账但还未确认？填写 TXID 核验</label>
+        <input id="usdt-txid" name="txid" type="text" inputmode="text" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="64" pattern="[a-fA-F0-9]{64}" placeholder="TXID">
+        <button id="usdt-verify" class="usdt-primary" type="submit" data-usdt-text="verify">核验转账</button>
+    </form>
+    <a id="usdt-return" class="usdt-return" href="#" data-usdt-text="return">返回订单</a>
+</main>
+</body>
+</html>

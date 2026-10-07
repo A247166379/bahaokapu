@@ -1,0 +1,10 @@
+#{include file="./Header.html"}
+<main class="ls-main" id="store-main">
+    <section class="ls-shell ls-empty-state ls-closed-state">
+        <span><i class="fa-duotone fa-regular fa-screwdriver-wrench"></i></span>
+        <h1>#{t("店铺正在维护")}</h1>
+        <div style="white-space:pre-wrap;overflow-wrap:anywhere">#{$config.closed_message}</div>
+        <a class="ls-button ls-button--primary" href="#{store_url('/')}">#{t("刷新页面")}</a>
+    </section>
+</main>
+#{include file="./Footer.html"}

@@ -1,0 +1,34 @@
+#{include file="../Header.html"}
+<div class="content d-flex flex-column flex-column-fluid" id="kt_content">
+    #{include file="../Toolbar.html"}
+    <div class="post d-flex flex-column-fluid">
+        <div id="kt_content_container" class="container-fluid">
+            <div class="md-stat-grid mb-5" data-admin-mobile-stats="mini" role="region" aria-label="#{t('店铺概况')}">
+                #{include file="../Component/StatCard.html" accent="primary" icon="fa-box" label="上架商品" value=$dashboard.products}
+                #{include file="../Component/StatCard.html" accent="success" icon="fa-key" label="库存卡密" value=$dashboard.cards}
+                #{include file="../Component/StatCard.html" accent="info" icon="fa-receipt" label="已付订单" value=$dashboard.paid_orders}
+                #{include file="../Component/StatCard.html" accent="warning" icon="fa-truck" label="待发货订单" value=$dashboard.pending_delivery}
+                #{include file="../Component/StatCard.html" accent="secondary" icon="fa-cart-shopping" label="今日订单" value=$dashboard.today_orders}
+                #{include file="../Component/StatCard.html" accent="success" icon="fa-circle-dollar" label="今日成交额" value=$dashboard.today_sales_display}
+            </div>
+            <section class="card mb-5">
+                <div class="card-header align-items-center"><h2 class="fs-4 mb-0">#{t("最近已付订单")}</h2><a class="btn btn-sm btn-light" href="/admin/order/index">#{t("查看订单")}</a></div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <thead><tr><th>#{t("订单号")}</th><th>#{t("商品")}</th><th>#{t("数量")}</th><th>#{t("金额")}</th><th>#{t("支付时间")}</th><th>#{t("发货状态")}</th></tr></thead>
+                            <tbody>
+                            #{foreach $recent_orders as $order}
+                                <tr><td class="text-nowrap">#{$order.trade_no|escape:'html'}</td><td>#{$order.commodity.name|default:'—'|escape:'html'}</td><td>#{$order.card_num|escape:'html'}</td><td class="text-nowrap">#{$dashboard.currency_symbol|escape:'html'}#{$order.display_amount|escape:'html'}</td><td class="text-nowrap">#{$order.pay_time|escape:'html'}</td><td class="text-nowrap">#{if $order.delivery_status == 1}#{t("已发货")}#{else}#{t("待发货")}#{/if}</td></tr>
+                            #{foreachelse}
+                                <tr><td colspan="6" class="text-center text-muted py-6">#{t("暂无已付订单")}</td></tr>
+                            #{/foreach}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+#{include file="../Footer.html"}
