@@ -12,7 +12,7 @@
 
 八号卡铺基于 [lizhipay/acg-faka](https://github.com/lizhipay/acg-faka) 二次开发，围绕数字商品销售调整了店铺展示、后台配置、支付管理和多语言内容管理。
 
-本项目的开源介绍方式参考 [独角数卡](https://github.com/hiouttime/dujiaoka)。这里发布的是八号卡铺自己的源码，运行环境和安装步骤请以本仓库说明为准。
+运行环境和安装步骤请以本仓库说明为准。
 
 ## 功能
 
@@ -96,7 +96,6 @@ LICENSE                  MIT 许可证
 本项目使用 [MIT License](LICENSE)，保留原作者 `Copyright (c) 2021 lizhipay`。允许在遵守许可证、保留版权和许可声明的前提下使用、修改及分发。
 
 - 原始程序：[lizhipay/acg-faka](https://github.com/lizhipay/acg-faka)。
-- 开源展示参考：[hiouttime/dujiaoka](https://github.com/hiouttime/dujiaoka)。
 - PHP 依赖和前端资源：各自保留其许可证，详见相应目录。
 - IP 地理数据：[DB-IP IP to Country Lite](https://db-ip.com/db/download/ip-to-country-lite)，使用 CC BY 4.0；详见 [数据许可说明](app/Data/GeoIP/LICENSE.txt)。
 
